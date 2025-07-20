@@ -1,0 +1,33 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Editar Categoría{% endblock %}
+
+{% block content %}
+<div class="admin-form">
+    <h4 class="mb-4">Editar Categoría: {{ categoria.nombre }}</h4>
+    <form method="POST" action="{{ url_for('editar_categoria', categoria_id=categoria.id) }}">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre de la Categoría</label>
+                <input type="text" name="nombre" class="form-control" value="{{ categoria.nombre }}" required>
+            </div>
+            {% if categoria.parent_id is not none %}
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Categoría Principal</label>
+                    <select name="parent_id" class="form-select" required>
+                        {% for cat in categorias_principales %}
+                            <option value="{{ cat.id }}" {% if cat.id == categoria.parent_id %}selected{% endif %}>
+                                {{ cat.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+        </div>
+        <div class="d-flex justify-content-end">
+            <a href="{{ url_for('admin_categorias') }}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Actualizar Categoría</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

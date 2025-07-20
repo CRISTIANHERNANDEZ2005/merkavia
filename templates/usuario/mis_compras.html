@@ -1,0 +1,206 @@
+{% extends "usuario/base.html" %}
+
+{% block title %}Mis Compras{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Mis Compras</h2>
+            <p class="text-muted">Historial de todas tus compras completadas</p>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form class="row g-3">
+                        <div class="col-md-4">
+                            <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" 
+                                   value="{{ fecha_inicio }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" 
+                                   value="{{ fecha_fin }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="metodo_pago" class="form-label">Método de Pago</label>
+                            <select class="form-select" id="metodo_pago" name="metodo_pago">
+                                <option value="">Todos los métodos</option>
+                                {% for metodo in metodos_pago %}
+                                    <option value="{{ metodo }}" {% if metodo_pago == metodo %}selected{% endif %}>
+                                        {{ metodo|capitalize }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> Filtrar
+                            </button>
+                            <a href="{{ url_for('mis_compras') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-sync-alt me-1"></i> Limpiar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-light shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Compras</h6>
+                            <h3 class="mb-0">{{ total_compras }}</h3>
+                        </div>
+                        <div class="bg-primary text-white p-3 rounded">
+                            <i class="fas fa-shopping-bag fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-light shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Gastado</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(monto_total) }}</h3>
+                        </div>
+                        <div class="bg-success text-white p-3 rounded">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Compras -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% if compras %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha</th>
+                                    <th>Productos</th>
+                                    <th>Total</th>
+                                    <th>Método Pago</th>
+                                    <th>Puntos</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for compra in compras %}
+                                <tr>
+                                    <td>{{ compra.id }}</td>
+                                    <td>{{ compra.fecha_pedido.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        {% for detalle in compra.detalles|sort(attribute='producto.nombre') %}
+                                            {{ detalle.cantidad }}x {{ detalle.producto.nombre }}<br>
+                                        {% endfor %}
+                                    </td>
+                                    <td>${{ "%.2f"|format(compra.total) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if compra.metodo_pago == 'tarjeta' else 'info' }}">
+                                            {{ compra.metodo_pago|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if compra.puntos_usados > 0 %}
+                                            <span class="badge bg-warning text-dark">
+                                                -{{ compra.puntos_usados }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex">
+                                            <a href="{{ url_for('detalle_pedido', pedido_id=compra.id) }}" 
+                                               class="btn btn-sm btn-primary me-1" 
+                                               title="Ver Detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('descargar_factura', pedido_id=compra.id) }}" 
+                                               class="btn btn-sm btn-success" 
+                                               title="Descargar Factura">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    {% if paginacion.pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if paginacion.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('mis_compras', page=paginacion.prev_num, 
+                                                                        fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+                                                                        metodo_pago=metodo_pago) }}">
+                                        &laquo;
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in paginacion.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == paginacion.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('mis_compras', page=page_num, 
+                                                                            fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+                                                                            metodo_pago=metodo_pago) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if paginacion.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('mis_compras', page=paginacion.next_num, 
+                                                                        fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+                                                                        metodo_pago=metodo_pago) }}">
+                                        &raquo;
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+                        <h4>No has realizado compras aún</h4>
+                        <p class="text-muted">Cuando realices compras, aparecerán aquí</p>
+                        <a href="{{ url_for('todos_productos') }}" class="btn btn-primary">
+                            <i class="fas fa-store me-1"></i> Ir a la tienda
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

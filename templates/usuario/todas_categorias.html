@@ -1,0 +1,83 @@
+{% extends 'usuario/base.html' %}
+
+{% block title %}Todas las Categorías - Tienda Online{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Migas de pan -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light p-3 rounded-3 shadow-sm">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('index') }}" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i> Inicio
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+                Todas las Categorías
+            </li>
+        </ol>
+    </nav>
+
+    <h1 class="display-5 fw-bold text-center mb-5">Explora Todas Nuestras Categorías</h1>
+
+    <div class="row">
+        {% for grupo in categorias_con_sub %}
+        <div class="col-lg-6 mb-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h4 mb-0">
+                        <a href="{{ url_for('mostrar_categoria', categoria_id=grupo.categoria.id) }}" 
+                           class="text-white text-decoration-none">
+                            <i class="fas fa-{{ grupo.categoria.icono|default('tags') }} me-2"></i>
+                            {{ grupo.categoria.nombre }}
+                        </a>
+                    </h2>
+                </div>
+                <div class="card-body">
+                    {% if grupo.subcategorias %}
+                    <div class="row">
+                        {% for subcat in grupo.subcategorias %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 bg-light rounded-3 hover-bg">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-{{ subcat.icono|default('folder') }} fa-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h6 mb-1">{{ subcat.nombre }}</h3>
+                                    <a href="{{ url_for('mostrar_categoria', categoria_id=subcat.id) }}" 
+                                       class="btn btn-sm btn-outline-primary py-1 px-2">
+                                        Ver productos
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-3">Esta categoría no tiene subcategorías</p>
+                        <a href="{{ url_for('mostrar_categoria', categoria_id=grupo.categoria.id) }}" 
+                           class="btn btn-primary">
+                            Ver productos de {{ grupo.categoria.nombre }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .hover-bg {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-bg:hover {
+        background-color: #e9f7fe !important;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+</style>
+{% endblock %}

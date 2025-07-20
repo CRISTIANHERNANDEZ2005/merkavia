@@ -1,0 +1,71 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Editar Proveedor{% endblock %}
+
+{% block content %}
+<div class="admin-form">
+    <div class="card-header mb-4">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-edit me-2"></i>Editar Proveedor: {{ proveedor.nombre }}
+        </h5>
+    </div>
+    
+    <form method="POST" action="{{ url_for('editar_proveedor', proveedor_id=proveedor.id) }}">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="nombre" class="form-label">Nombre del Proveedor</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" 
+                       value="{{ proveedor.nombre }}" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="identificacion" class="form-label">Identificación/NIT</label>
+                <input type="text" class="form-control" id="identificacion" name="identificacion" 
+                       value="{{ proveedor.identificacion }}" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="tipo" class="form-label">Tipo de Proveedor</label>
+                <select class="form-select" id="tipo" name="tipo" required>
+                    <option value="persona" {% if proveedor.tipo == 'persona' %}selected{% endif %}>Persona Natural</option>
+                    <option value="empresa" {% if proveedor.tipo == 'empresa' %}selected{% endif %}>Empresa</option>
+                </select>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="telefono" class="form-label">Teléfono</label>
+                <input type="tel" class="form-control" id="telefono" name="telefono" 
+                       value="{{ proveedor.telefono or '' }}">
+            </div>
+            
+            <div class="col-12">
+                <label for="direccion" class="form-label">Dirección</label>
+                <input type="text" class="form-control" id="direccion" name="direccion" 
+                       value="{{ proveedor.direccion or '' }}">
+            </div>
+            
+            <div class="col-12">
+                <label for="email" class="form-label">Correo Electrónico</label>
+                <input type="email" class="form-control" id="email" name="email" 
+                       value="{{ proveedor.email or '' }}">
+            </div>
+            
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                </button>
+                <a href="{{ url_for('admin_proveedores') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .admin-form {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}

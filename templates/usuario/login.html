@@ -1,0 +1,119 @@
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Tienda Online" class="img-fluid imgnav rounded-4 shadow-lg">
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <!-- Buscador mejorado con icono integrado -->
+            <li class="nav-item search-container me-2">
+                <div class="position-relative">
+                    <form class="d-flex" method="GET" action="{{ url_for('buscar_productos') }}">
+                        <div class="search-input-wrapper position-relative">
+                            <i class="fas fa-search search-icon position-absolute top-50 start-0 translate-middle-y ms-3"></i>
+                            <input class="form-control search-input ps-5" type="search" placeholder="Buscar productos..." 
+                                   aria-label="Buscar" name="q" id="searchInput" autocomplete="off">
+                            <button class="btn search-btn position-absolute top-50 end-0 translate-middle-y me-3" type="submit">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <!-- Sugerencias con estilo de categorías -->
+                    <div id="searchSuggestions" class="dropdown-menu position-absolute w-100 mt-1 rounded-4 shadow-lg overflow-hidden" 
+                         style="display: none;">
+                        <!-- Las sugerencias se cargarán dinámicamente aquí -->
+                    </div>
+                </div>
+            </li>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Inicio</a>
+                    </li>
+                    
+                    <li class="nav-item dropdown" data-bs-auto-close="outside">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Categorías</a>
+                        <ul class="dropdown-menu">
+                            {% for categoria in categorias_principales %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('mostrar_categoria', categoria_id=categoria.id) }}">
+                                        <i class="fas fa-tag me-2"></i> {{ categoria.nombre }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('todas_categorias') }}">
+                                    <i class="fas fa-list me-2"></i> Ver todas las categorías
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ver_carrito') }}">
+                            <i class="fas fa-shopping-cart me-1"></i> Carrito
+                            {% if 'usuario_id' in session and carrito_count %}
+                                <span class="badge badge-cart">{{ carrito_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('todas_ofertas') }}">
+                            <i class="fas fa-gift me-1"></i> Ofertas
+                        </a>
+                    </li>
+                    
+                    {% if 'usuario_id' in session %}
+                        <li class="nav-item dropdown" data-bs-auto-close="outside">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                                <span class="user-avatar">{{ session['usuario_nombre'][0] }}</span>
+                                {{ session['usuario_nombre'] }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('perfil') }}">
+                                        <i class="fas fa-user-circle me-2"></i> Mi Cuenta
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('mis_pedidos') }}">
+                                        <i class="fas fa-box me-2"></i> Mis pedidos
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i> Cuenta
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li class="nav-item">
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
+                                        <i class="fas fa-sign-in-alt me-2"></i> Iniciar Sesión
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#registroModal">
+                                        <i class="fas fa-user-plus me-2"></i> Registrarse
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>

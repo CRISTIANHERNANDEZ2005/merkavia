@@ -1,0 +1,836 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Reportes de Inventario{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Reporte de Inventario</h5>
+                    <p class="mb-0">Valores calculados incluyen descuentos aplicados</p>
+                </div>
+                <div class="card-body">
+                    <!-- Estadísticas -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stats-card">
+                                <div class="card-icon bg-primary">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div class="card-value">{{ total_productos }}</div>
+                                <div class="card-title">Total de Productos</div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stats-card">
+                                <div class="card-icon bg-success">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="card-value">{{ valor_total_final|currency }}</div>
+                                <div class="card-title">Valor Final</div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stats-card">
+                                <div class="card-icon bg-info">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="card-value">{{ descuento_total|currency }}</div>
+                                <div class="card-title">Descuento Total</div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stats-card">
+                                <div class="card-icon bg-warning">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="card-value">{{ "{:,.1f}".format(descuento_promedio) }}%</div>
+                                <div class="card-title">Desc. Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparación Precios -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="data-card">
+                                <div class="card-header">
+                                    <h6 class="card-title">Comparación de Valor Base vs Valor Final</h6>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="comparisonChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficos -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <div class="card-header">
+                                    <h6 class="card-title">Existecia por Categoría</h6>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="stockChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <div class="card-header">
+                                    <h6 class="card-title">Valor Final por Categoría</h6>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="valueChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Productos -->
+                    <div class="data-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0">Detalle de Productos</h6>
+                            <div>
+                                <span class="badge bg-primary me-2">Base: {{ valor_total_base|currency }}</span>
+                                <span class="badge bg-success">Final: {{ valor_total_final|currency }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Filtros dentro de la sección de detalles -->
+                        <div class="filtros-container bg-light p-3 mb-3 border rounded">
+                            <div class="row g-3">
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="categoriaPrincipalFilter" class="form-label">Categoría Principal</label>
+                                    <select id="categoriaPrincipalFilter" class="form-select">
+                                        <option value="">Todas las categorías</option>
+                                        {% for grupo in categorias_con_sub %}
+                                        <option value="c{{ grupo.principal.id }}">{{ grupo.principal.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="categoriaFilter" class="form-label">Subcategoría</label>
+                                    <select id="categoriaFilter" class="form-select" disabled>
+                                        <option value="">Todas las subcategorías</option>
+                                        {% for grupo in categorias_con_sub %}
+                                        {% for subcat in grupo.subcategorias %}
+                                        <option class="subcategoria-option subcategoria-c{{ grupo.principal.id }}" 
+                                                value="s{{ subcat.id }}" 
+                                                style="display:none;">
+                                            {{ subcat.nombre }}
+                                        </option>
+                                        {% endfor %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-6">
+                                    <label for="stockFilter" class="form-label">Estado existencia</label>
+                                    <select id="stockFilter" class="form-select">
+                                        <option value="">Todos</option>
+                                        <option value="bajo">Bajo Stock</option>
+                                        <option value="sobre">Sobre Stock</option>
+                                        <option value="normal">Stock Normal</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-6">
+                                    <label for="descuentoFilter" class="form-label">Descuento</label>
+                                    <select id="descuentoFilter" class="form-select">
+                                        <option value="">Todos</option>
+                                        <option value="con_descuento">Con Descuento</option>
+                                        <option value="sin_descuento">Sin Descuento</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-12 d-flex align-items-end">
+                                    <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                                        <i class="fas fa-redo"></i> Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-lg-8 col-md-12">
+                                    <label for="searchInput" class="form-label">Buscar Producto</label>
+                                    <input type="text" id="searchInput" class="form-control" 
+                                           placeholder="Nombre, marca... (desde primera letra)">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered" id="inventoryTable" style="border-collapse: separate; border-spacing: 0 10px;">
+                                <thead class="table-dark" style="position: sticky; top: 0; z-index: 10;">
+                                    <tr>
+                                        <th style="border-top-left-radius: 10px;">Producto</th>
+                                        <th>Categoría</th>
+                                        <th>Subcategoría</th>
+                                        <th>Existencia</th>
+                                        <th>Precio</th>
+                                        <th>Descuento</th>
+                                        <th>Valor</th>
+                                        <th style="border-top-right-radius: 10px;">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for producto in productos %}
+                                    {% set valor_base = producto.precio * producto.stock %}
+                                    {% set valor_final = producto.precio_final * producto.stock %}
+                                    {% set categoria_principal = producto.categoria.parent.nombre if producto.categoria.parent else producto.categoria.nombre %}
+                                    <tr class="product-row" 
+                                        data-categoria-principal="{{ categoria_principal }}"
+                                        data-categoria="{{ producto.categoria.nombre }}"
+                                        data-categoria-id="{{ producto.categoria.id }}"
+                                        data-stock="{{ producto.stock }}"
+                                        data-min="{{ producto.stock_minimo }}"
+                                        data-max="{{ producto.stock_maximo }}"
+                                        data-descuento="{{ 'con_descuento' if producto.descuento > 0 else 'sin_descuento' }}">
+                                        
+                                        <!-- Columna de Producto -->
+                                        <td class="align-middle">
+                                            <div class="d-flex align-items-center">
+                                                <div class="product-img-container me-3">
+                                                    <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}" class="product-img">
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ producto.nombre }}</div>
+                                                    <div class="text-muted small">{{ producto.marca if producto.marca else 'Sin marca' }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        
+                                        <!-- Columna de Categorías -->
+                                        <td class="align-middle">
+                                            <span class="badge bg-primary bg-opacity-10 text-primary">
+                                                {{ categoria_principal }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle">
+                                            {% if producto.categoria.parent %}
+                                            <span class="badge bg-info bg-opacity-10 text-info">
+                                                {{ producto.categoria.nombre }}
+                                            </span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        
+                                        <!-- Columna de Stock -->
+                                        <td class="align-middle">
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                    {% set progress_percent = (producto.stock / producto.stock_maximo) * 100 %}
+                                                    <div class="progress-bar 
+                                                        {% if producto.stock < producto.stock_minimo %}bg-danger
+                                                        {% elif producto.stock > producto.stock_maximo %}bg-warning
+                                                        {% else %}bg-success{% endif %}" 
+                                                        role="progressbar" 
+                                                        style="width: {{ progress_percent }}%;" 
+                                                        aria-valuenow="{{ progress_percent }}" 
+                                                        aria-valuemin="0" 
+                                                        aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <span class="fw-bold">{{ producto.stock }}</span>
+                                            </div>
+                                            <div class="small text-muted mt-1">
+                                                Min: {{ producto.stock_minimo }} <br> Max: {{ producto.stock_maximo }}
+                                            </div>
+                                        </td>
+                                        
+                                        <!-- Columna de Precios -->
+                                        <td class="align-middle">
+                                            <div class="d-flex flex-column">
+                                                <span class="text-decoration-line-through text-muted small">
+                                                    {{ producto.precio|currency }}
+                                                </span>
+                                                <span class="fw-bold text-success fs-5">
+                                                    {{ producto.precio_final|currency }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        
+                                        <!-- Columna de Descuento -->
+                                        <td class="align-middle">
+                                            {% if producto.descuento > 0 %}
+                                            <div class="discount-badge">
+                                                <span class="discount-percent">{{ "{:,.0f}".format(producto.descuento) }}%</span>
+                                                <span class="discount-label">DESCUENTO</span>
+                                            </div>
+                                            {% else %}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary">Sin descuento</span>
+                                            {% endif %}
+                                        </td>
+                                        
+                                        <!-- Columna de Valor -->
+                                        <td class="align-middle">
+                                            <div class="d-flex flex-column">
+                                                <span class="text-muted small">
+                                                    {{ valor_base|currency }}
+                                                </span>
+                                                <span class="fw-bold">
+                                                    {{ valor_final|currency }}
+                                                </span>
+                                                <span class="text-success small">
+                                                    <i class="fas fa-arrow-down"></i> {{ (valor_base - valor_final)|currency }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        
+                                        <!-- Columna de Estado -->
+                                        <td class="align-middle">
+                                            <div class="d-flex justify-content-center">
+                                                {% if producto.stock < producto.stock_minimo %}
+                                                <div class="status-badge status-low">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i> Bajo Stock
+                                                </div>
+                                                {% elif producto.stock > producto.stock_maximo %}
+                                                <div class="status-badge status-high">
+                                                    <i class="fas fa-boxes me-1"></i> Sobre Stock
+                                                </div>
+                                                {% else %}
+                                                <div class="status-badge status-normal">
+                                                    <i class="fas fa-check-circle me-1"></i> Normal
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    
+                                    <!-- Mensaje cuando no hay productos -->
+                                    <tr id="noProductsRow" style="display: none;">
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="d-flex flex-column align-items-center">
+                                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                                <h5 class="text-muted">¡Almacén vacío!</h5>
+                                                <p class="text-muted">No encontramos productos con esos filtros</p>
+                                                <div class="mt-3">
+                                                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                                                    <span class="small">Prueba ajustando los filtros o reiniciando la búsqueda</span>
+                                                </div>
+                                                <button id="resetFiltersButton" class="btn btn-primary mt-3">
+                                                    <i class="fas fa-redo me-2"></i>Reiniciar búsqueda
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-secondary fw-bold">
+                                    <tr>
+                                        <td colspan="4" class="text-end">TOTALES</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="d-flex flex-column">
+                                            <span class="text-muted small">{{ valor_total_base|currency }}</span>
+                                            <span class="fw-bold">{{ valor_total_final|currency }}</span>
+                                            <span class="text-success small">
+                                                <i class="fas fa-arrow-down"></i> {{ descuento_total|currency }}
+                                            </span>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-3">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">Exportar:</span>
+                                <button id="exportPdf" class="btn btn-sm btn-danger me-2">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </button>
+                                <a href="{{ url_for('descargar_reporte_inventario_excel') }}" class="btn btn-success">
+                                    <i class="fas fa-file-excel"></i> Descargar Excel
+                                </a>
+                            </div>
+                            <div class="text-muted" id="productCounter">
+                                Mostrando {{ productos|length }} productos
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    /* Estilos para la tabla */
+    .data-card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+    
+    .card-header {
+        background: linear-gradient(120deg, #4361ee, #3a0ca3);
+        color: white;
+        border: none;
+    }
+    
+    .product-row {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        margin-bottom: 10px;
+    }
+    
+    .product-row:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.15);
+        background-color: #f8f9ff;
+    }
+    
+    .product-img-container {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f5f7fb;
+        border: 1px solid #eef2f7;
+    }
+    
+    .product-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+    }
+    
+    .discount-badge {
+        background: linear-gradient(120deg, #ff6b6b, #ff8e8e);
+        color: white;
+        border-radius: 20px;
+        padding: 5px 10px;
+        display: inline-flex;
+        align-items: center;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(255, 107, 107, 0.3);
+    }
+    
+    .discount-percent {
+        font-size: 1.1rem;
+        margin-right: 5px;
+    }
+    
+    .discount-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .status-low {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    
+    .status-normal {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    
+    .status-high {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    thead th {
+        padding: 15px 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+    }
+    
+    tbody td {
+        padding: 15px 20px;
+        vertical-align: middle;
+        border-top: none;
+        border-bottom: 1px solid #eef2f7;
+    }
+    
+    tfoot td {
+        padding: 15px 20px;
+        border-top: 2px solid #dee2e6;
+    }
+    
+    /* Bordes redondeados para la primera y última columna */
+    .product-row td:first-child {
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+    }
+    
+    .product-row td:last-child {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+    
+    /* Mensaje de no productos */
+    #noProductsRow td {
+        border-radius: 12px;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Datos para gráficos
+    const categorias = [{% for cat in categorias_stock %}"{{ cat }}",{% endfor %}];
+    const stockData = [{% for cat, data in categorias_stock.items() %}{{ data.stock }},{% endfor %}];
+    const valorBaseData = [{% for cat, data in categorias_stock.items() %}{{ data.valor_base }},{% endfor %}];
+    const valorFinalData = [{% for cat, data in categorias_stock.items() %}{{ data.valor_final }},{% endfor %}];
+    
+    // Configuración del gráfico de comparación
+    const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+    const comparisonChart = new Chart(comparisonCtx, {
+        type: 'bar',
+        data: {
+            labels: categorias,
+            datasets: [
+                {
+                    label: 'Valor Base',
+                    data: valorBaseData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Valor Final',
+                    data: valorFinalData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Configuración del gráfico de stock
+    const stockCtx = document.getElementById('stockChart').getContext('2d');
+    const stockChart = new Chart(stockCtx, {
+        type: 'bar',
+        data: {
+            labels: categorias,
+            datasets: [{
+                label: 'Cantidad en Stock',
+                data: stockData,
+                backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Configuración del gráfico de valor final
+    const valueCtx = document.getElementById('valueChart').getContext('2d');
+    const valueChart = new Chart(valueCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categorias,
+            datasets: [{
+                label: 'Valor Final',
+                data: valorFinalData,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                    'rgba(255, 159, 64, 0.6)',
+                    'rgba(199, 199, 199, 0.6)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(199, 199, 199, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': $' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Filtros de tabla
+    const categoriaPrincipalFilter = document.getElementById('categoriaPrincipalFilter');
+    const categoriaFilter = document.getElementById('categoriaFilter');
+    const stockFilter = document.getElementById('stockFilter');
+    const descuentoFilter = document.getElementById('descuentoFilter');
+    const searchInput = document.getElementById('searchInput');
+    const resetFilters = document.getElementById('resetFilters');
+    const tableRows = document.querySelectorAll('#inventoryTable tbody tr.product-row');
+    const noProductsRow = document.getElementById('noProductsRow');
+    const productCounter = document.getElementById('productCounter');
+    const resetFiltersButton = document.getElementById('resetFiltersButton');
+
+    categoriaPrincipalFilter.addEventListener('change', function() {
+        // Limpiar filtro de subcategorías
+        categoriaFilter.value = '';
+        categoriaFilter.disabled = this.value === '';
+        
+        // Ocultar todas las opciones de subcategorías
+        document.querySelectorAll('.subcategoria-option').forEach(option => {
+            option.style.display = 'none';
+        });
+        
+        // Mostrar solo las subcategorías de la categoría principal seleccionada
+        if (this.value) {
+            const principalId = this.value.replace('c', '');
+            document.querySelectorAll(`.subcategoria-option.subcategoria-c${principalId}`).forEach(option => {
+                option.style.display = '';
+            });
+        }
+        
+        filterTable();
+    });
+
+    function filterTable() {
+        const categoriaPrincipalValue = categoriaPrincipalFilter.value.replace('c', '') || '';
+        const categoriaValue = categoriaFilter.value.replace('s', '') || '';
+        const stockValue = stockFilter.value;
+        const descuentoValue = descuentoFilter.value;
+        const searchText = searchInput.value.toLowerCase();
+        
+        let visibleCount = 0;
+        
+        tableRows.forEach(row => {
+            const rowCategoriaPrincipal = row.getAttribute('data-categoria-principal');
+            const rowCategoriaId = row.getAttribute('data-categoria-id');
+            const rowStock = parseInt(row.getAttribute('data-stock'));
+            const rowMin = parseInt(row.getAttribute('data-min'));
+            const rowMax = parseInt(row.getAttribute('data-max'));
+            const rowDescuento = row.getAttribute('data-descuento');
+            
+            // Obtener nombre y marca del producto
+            const nombreProducto = row.cells[0].querySelector('.fw-bold').textContent.toLowerCase();
+            const marcaProducto = row.cells[0].querySelector('.text-muted').textContent.toLowerCase();
+            
+            // Verificar estado de stock
+            let stockStatus = 'normal';
+            if (rowStock < rowMin) stockStatus = 'bajo';
+            else if (rowStock > rowMax) stockStatus = 'sobre';
+            
+            // Verificar categoría principal
+            let matchCategoriaPrincipal = true;
+            if (categoriaPrincipalValue) {
+                matchCategoriaPrincipal = rowCategoriaPrincipal === 
+                    categoriaPrincipalFilter.options[categoriaPrincipalFilter.selectedIndex].text;
+            }
+            
+            // Verificar subcategoría
+            let matchCategoria = true;
+            if (categoriaValue) {
+                matchCategoria = rowCategoriaId === categoriaValue;
+            }
+            
+            const matchStock = stockValue === '' || stockStatus === stockValue;
+            const matchDescuento = descuentoValue === '' || rowDescuento === descuentoValue;
+            
+            // Búsqueda que empieza desde el primer carácter (startsWith)
+            const matchSearch = searchText === '' || 
+                              nombreProducto.startsWith(searchText) || 
+                              marcaProducto.startsWith(searchText);
+            
+            if (matchCategoriaPrincipal && matchCategoria && matchStock && matchDescuento && matchSearch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Actualizar contador
+        productCounter.textContent = `Mostrando ${visibleCount} de ${tableRows.length} productos`;
+        
+        // Mostrar u ocultar mensaje de no productos
+        if (visibleCount === 0) {
+            noProductsRow.style.display = '';
+            
+            if (searchText) {
+                noProductsRow.querySelector('h5').textContent = "¡No hay coincidencias!";
+                noProductsRow.querySelector('p').innerHTML = `No hay productos que comiencen con <strong>"${searchText}"</strong>`;
+                noProductsRow.querySelector('.fa-box-open').className = "fas fa-search fa-3x text-muted mb-3";
+            } else {
+                noProductsRow.querySelector('h5').textContent = "¡Almacén vacío!";
+                noProductsRow.querySelector('p').textContent = "No encontramos productos con esos filtros";
+                noProductsRow.querySelector('.fa-box-open').className = "fas fa-box-open fa-3x text-muted mb-3";
+            }
+        } else {
+            noProductsRow.style.display = 'none';
+        }
+    }
+
+    // Resetear filtros
+    resetFilters.addEventListener('click', function() {
+        categoriaPrincipalFilter.value = '';
+        categoriaFilter.value = '';
+        categoriaFilter.disabled = true;
+        stockFilter.value = '';
+        descuentoFilter.value = '';
+        searchInput.value = '';
+        
+        // Ocultar todas las subcategorías
+        document.querySelectorAll('.subcategoria-option').forEach(option => {
+            option.style.display = 'none';
+        });
+        
+        filterTable();
+    });
+
+    // Botón de reinicio dentro del mensaje de no productos
+    resetFiltersButton.addEventListener('click', function() {
+        resetFilters.click();
+    });
+
+    categoriaFilter.addEventListener('change', filterTable);
+    stockFilter.addEventListener('change', filterTable);
+    descuentoFilter.addEventListener('change', filterTable);
+    searchInput.addEventListener('input', filterTable);
+    
+    // Filtrar al cargar la página
+    filterTable();
+
+    // Exportar a PDF
+    document.getElementById('exportPdf').addEventListener('click', function() {
+        // Mostrar spinner o indicador de carga
+        const btn = this;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando PDF...';
+        btn.disabled = true;
+        
+        // Hacer la petición para generar el PDF
+        fetch('/admin/inventario/generar_pdf')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al generar el PDF');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Crear enlace para descarga
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reporte_inventario_${new Date().toISOString().slice(0,10)}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al generar el PDF: ' + error.message);
+            })
+            .finally(() => {
+                // Restaurar el botón
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            });
+    });
+
+    // Exportar a Excel
+    document.getElementById('exportExcel').addEventListener('click', function() {
+        const btn = this;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando Excel...';
+        btn.disabled = true;
+        
+        fetch('/admin/inventario/descargar_excel')
+            .then(response => {
+                if (!response.ok) throw new Error('Error al generar Excel');
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reporte_inventario_${new Date().toISOString().slice(0,10)}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al generar Excel: ' + error.message);
+            })
+            .finally(() => {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            });
+    });
+    
+    // Mensaje especial cuando no hay productos en absoluto
+    if (tableRows.length === 0) {
+        noProductsRow.style.display = '';
+        noProductsRow.querySelector('h5').textContent = "¡Almacén vacío!";
+        noProductsRow.querySelector('p').textContent = "No hay productos registrados en el inventario";
+        noProductsRow.querySelector('.fa-box-open').className = "fas fa-ghost fa-3x text-muted mb-3";
+        productCounter.textContent = "Mostrando 0 productos";
+    }
+});
+</script>
+{% endblock %}

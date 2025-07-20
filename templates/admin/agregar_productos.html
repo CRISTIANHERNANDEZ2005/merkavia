@@ -1,0 +1,524 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Agregar Nuevo Producto{% endblock %}
+
+{% block content %}
+<div class="admin-form">
+    <h4 class="mb-4">Agregar Nuevo Producto</h4>
+    <form method="POST" action="{{ url_for('agregar_producto') }}" id="productForm">
+        <div class="row">
+            <!-- Nuevos campos para proveedor y producto del proveedor -->
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Proveedor</label>
+                <select class="form-select" id="proveedor_id" name="proveedor_id">
+                    <option value="">Seleccione un proveedor</option>
+                    {% for proveedor in proveedores %}
+                        <option value="{{ proveedor.id }}">{{ proveedor.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Si selecciona un proveedor, este producto no podrá ser editado posteriormente</small>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Producto del Proveedor</label>
+                <select name="producto_proveedor_id" id="producto_proveedor_id" class="form-select" disabled>
+                    <option value="">Seleccione un proveedor primero</option>
+                </select>
+            </div>
+
+            <!-- Campos existentes -->
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre del Producto</label>
+                <input type="text" name="nombre" id="nombre" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Subcategoría</label>
+                <select name="categoria_id" class="form-select" required>
+                    <option value="">Seleccionar subcategoría</option>
+                    {% for subcategoria in subcategorias %}
+                    <option value="{{ subcategoria.id }}">{{ subcategoria.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Precio</label>
+                <input type="number" step="0.01" name="precio" id="precio" class="form-control" required min="0">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Costo</label>
+                <input type="number" step="0.01" name="costo" id="costo" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Existencia</label>
+                <input type="number" name="stock" id="stock" class="form-control" required min="0">
+                <div id="stockError" class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Stock Mínimo</label>
+                <input type="number" name="stock_minimo" id="stock_minimo" class="form-control" value="10" required min="0">
+                <div id="stockMinimoError" class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Stock Máximo</label>
+                <input type="number" name="stock_maximo" id="stock_maximo" class="form-control" value="100" required min="0">
+                <div id="stockMaximoError" class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Descuento (%)</label>
+                <input type="number" name="descuento" id="descuento" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Precio con Descuento</label>
+                <input type="text" id="precio_final" class="form-control" readonly>
+                <div class="form-text">Precio final que verá el cliente</div>
+            </div>
+            <div class="col-12 mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea name="descripcion" id="descripcion" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="col-12 mb-3">
+                <label class="form-label">URL de la Imagen</label>
+                <input type="text" name="imagen" class="form-control" placeholder="https://example.com/image.jpg">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Marca</label>
+                <input type="text" name="marca" id="marca" class="form-control">
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="destacado" name="destacado">
+                    <label class="form-check-label" for="destacado">
+                        Producto destacado
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <a href="{{ url_for('admin_productos') }}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary" id="submitButton">Guardar Producto</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del DOM
+    const proveedorSelect = document.getElementById('proveedor_id');
+    const productoProveedorSelect = document.getElementById('producto_proveedor_id');
+    const nombreInput = document.getElementById('nombre');
+    const descripcionInput = document.getElementById('descripcion');
+    const marcaInput = document.getElementById('marca');
+    const precioInput = document.getElementById('precio');
+    const costoInput = document.getElementById('costo');
+    const stockInput = document.getElementById('stock');
+    const stockMinimoInput = document.getElementById('stock_minimo');
+    const stockMaximoInput = document.getElementById('stock_maximo');
+    const descuentoInput = document.getElementById('descuento');
+    const precioFinalInput = document.getElementById('precio_final');
+    const submitButton = document.getElementById('submitButton');
+    const stockError = document.getElementById('stockError');
+    const stockMinimoError = document.getElementById('stockMinimoError');
+    const stockMaximoError = document.getElementById('stockMaximoError');
+
+    // Elementos para mostrar el margen
+    const margenInfo = document.createElement('div');
+    margenInfo.className = 'form-text mt-1';
+    precioInput.parentNode.appendChild(margenInfo);
+
+    // Elemento para mostrar error de precio
+    const precioError = document.createElement('div');
+    precioError.className = 'invalid-feedback';
+    precioError.id = 'precioError';
+    precioInput.parentNode.appendChild(precioError);
+
+    // Función para mostrar alertas
+    function showAlert(message, type = 'danger') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.querySelector('.admin-form').prepend(alertDiv);
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    // Función para cargar productos en el select
+    function cargarProductosEnSelect(proveedorId) {
+        productoProveedorSelect.disabled = true;
+        productoProveedorSelect.innerHTML = '<option value="">Cargando productos...</option>';
+
+        if (!proveedorId || isNaN(proveedorId)) {
+            productoProveedorSelect.innerHTML = '<option value="">Seleccione un proveedor primero</option>';
+            showAlert('Por favor seleccione un proveedor válido', 'danger');
+            return;
+        }
+
+        fetch(`/admin/proveedores/${proveedorId}/products/json`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.success) {
+                    throw new Error(data.message || 'Error al cargar productos');
+                }
+
+                productoProveedorSelect.innerHTML = '<option value="">Seleccione un producto (opcional)</option>';
+
+                if (!data.productos || data.productos.length === 0) {
+                    productoProveedorSelect.innerHTML = '<option value="">Este proveedor no tiene productos disponibles</option>';
+                    showAlert('Este proveedor no tiene productos disponibles', 'warning');
+                    productoProveedorSelect.disabled = true;
+                    return;
+                }
+
+                data.productos.forEach(producto => {
+                    const option = new Option(
+                        producto.formatted || producto.nombre,
+                        producto.id
+                    );
+                    option.dataset.costo = producto.costo;
+                    option.dataset.stock = producto.stock;
+                    option.dataset.nombre = producto.nombre;
+                    option.dataset.marca = producto.marca || '';
+                    option.dataset.descripcion = producto.descripcion || '';
+                    productoProveedorSelect.appendChild(option);
+                });
+
+                productoProveedorSelect.disabled = false;
+                validarFormulario();
+            })
+            .catch(error => {
+                console.error('Error al cargar productos:', error);
+                productoProveedorSelect.innerHTML = '<option value="">Error al cargar productos</option>';
+                showAlert(`Error al cargar productos: ${error.message}`, 'danger');
+                productoProveedorSelect.disabled = true;
+            });
+    }
+
+    // Función para calcular y mostrar el margen
+    function actualizarMargen() {
+        const costo = parseFloat(costoInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+
+        if (costo > 0 && precio > 0) {
+            const margen = ((precio - costo) / costo) * 100;
+            const ganancia = precio - costo;
+
+            margenInfo.textContent = `Margen: ${margen.toFixed(2)}% (Ganancia: $${ganancia.toFixed(2)})`;
+
+            // Cambiar color según el margen
+            if (margen < 50) {
+                margenInfo.style.color = '#dc3545';
+                margenInfo.innerHTML += ' ❌ (Mínimo 50% requerido)';
+            } else {
+                margenInfo.style.color = '#28a745';
+                margenInfo.innerHTML += ' ✅';
+            }
+        } else {
+            margenInfo.textContent = '';
+        }
+    }
+
+    // Función para validar el formulario
+    function validarFormulario() {
+        let isValid = true;
+        const stock = parseInt(stockInput.value) || 0;
+        const stockMinimo = parseInt(stockMinimoInput.value) || 0;
+        const stockMaximo = parseInt(stockMaximoInput.value) || 0;
+        const costo = parseFloat(costoInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+        const proveedorId = proveedorSelect.value;
+
+        // Reset errors
+        stockError.textContent = '';
+        stockMinimoError.textContent = '';
+        stockMaximoError.textContent = '';
+        precioError.textContent = '';
+        stockInput.classList.remove('is-invalid');
+        stockMinimoInput.classList.remove('is-invalid');
+        stockMaximoInput.classList.remove('is-invalid');
+        precioInput.classList.remove('is-invalid');
+
+        // Validación de stock
+        if (stockMinimo > stockMaximo) {
+            stockMinimoError.textContent = 'El stock mínimo no puede ser mayor que el stock máximo.';
+            stockMinimoInput.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (stock < stockMinimo) {
+            stockError.textContent = `El stock debe ser mayor o igual a ${stockMinimo}.`;
+            stockInput.classList.add('is-invalid');
+            isValid = false;
+        } else if (stock > stockMaximo) {
+            stockError.textContent = `El stock debe ser menor o igual a ${stockMaximo}.`;
+            stockInput.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Validación de precio vs costo (solo si hay proveedor)
+        if (proveedorId && costo > 0 && precio > 0) {
+            const margenMinimo = 50; // 50% mínimo
+            const margenActual = ((precio - costo) / costo) * 100;
+
+            if (margenActual < margenMinimo) {
+                const precioMinimo = (costo * (1 + margenMinimo/100)).toFixed(2);
+                precioError.textContent = `El precio debe ser al menos $${precioMinimo} para un margen del 50%.`;
+                precioInput.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+
+        // Validación de descuento
+        const descuento = parseFloat(descuentoInput.value) || 0;
+        if (descuento < 0 || descuento > 100) {
+            descuentoInput.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            descuentoInput.classList.remove('is-invalid');
+        }
+
+        submitButton.disabled = !isValid;
+        return isValid;
+    }
+
+    // Función para calcular el precio con descuento
+    function calcularPrecioFinal() {
+        const precio = parseFloat(precioInput.value) || 0;
+        const descuento = parseFloat(descuentoInput.value) || 0;
+
+        if (descuento > 0) {
+            const precioFinal = precio * (1 - descuento / 100);
+            precioFinalInput.value = precioFinal.toFixed(2);
+        } else {
+            precioFinalInput.value = precio.toFixed(2);
+        }
+    }
+
+    // Función para calcular y mostrar ganancias
+    function calcularGanancias() {
+        const costo = parseFloat(costoInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+        const descuento = parseFloat(descuentoInput.value) || 0;
+        const stock = parseInt(stockInput.value) || 0;
+        const stockMaximo = parseInt(stockMaximoInput.value) || 0;
+
+        const precioFinal = descuento > 0 ? precio * (1 - descuento / 100) : precio;
+        const gananciaPorUnidad = precioFinal - costo;
+        const gananciaStock = gananciaPorUnidad * stock;
+        const gananciaMaxima = gananciaPorUnidad * stockMaximo;
+
+        // Mostrar "N/A" para productos sin costo (sin proveedor)
+        const gananciaUnidadEl = document.getElementById('gananciaUnidad');
+        const gananciaStockEl = document.getElementById('gananciaStock');
+        const gananciaMaximaEl = document.getElementById('gananciaMaxima');
+
+        if (costo <= 0) {
+            gananciaUnidadEl.textContent = 'N/A';
+            gananciaStockEl.textContent = 'N/A';
+            gananciaMaximaEl.textContent = 'N/A';
+            gananciaUnidadEl.style.color = '#6c757d';
+            gananciaStockEl.style.color = '#6c757d';
+            gananciaMaximaEl.style.color = '#6c757d';
+        } else {
+            gananciaUnidadEl.textContent = `$${gananciaPorUnidad.toFixed(2)}`;
+            gananciaStockEl.textContent = `$${gananciaStock.toFixed(2)}`;
+            gananciaMaximaEl.textContent = `$${gananciaMaxima.toFixed(2)}`;
+            gananciaUnidadEl.style.color = gananciaPorUnidad >= 0 ? '#28a745' : '#dc3545';
+            gananciaStockEl.style.color = gananciaStock >= 0 ? '#007bff' : '#dc3545';
+            gananciaMaximaEl.style.color = gananciaMaxima >= 0 ? '#17a2b8' : '#dc3545';
+        }
+    }
+
+    // Cuando cambia el proveedor seleccionado
+    proveedorSelect.addEventListener('change', function() {
+        const proveedorId = this.value;
+        productoProveedorSelect.innerHTML = '<option value="">Seleccione un producto (opcional)</option>';
+        productoProveedorSelect.disabled = !proveedorId;
+
+        if (proveedorId) {
+            // Mostrar advertencia
+            if (!confirm('¿Está seguro de asociar este producto a un proveedor?\n\nNota: Los productos con proveedor no podrán ser editados posteriormente.')) {
+                this.value = '';
+                productoProveedorSelect.innerHTML = '<option value="">Seleccione un proveedor primero</option>';
+                productoProveedorSelect.disabled = true;
+                return;
+            }
+
+            // Cargar productos del proveedor
+            cargarProductosEnSelect(proveedorId);
+        }
+    });
+
+    // Cuando se selecciona un producto del proveedor
+    productoProveedorSelect.addEventListener('change', function() {
+        const productoId = this.value;
+
+        // Limpiar campos si no hay producto seleccionado
+        if (!productoId) {
+            nombreInput.value = '';
+            descripcionInput.value = '';
+            marcaInput.value = '';
+            costoInput.value = '';
+            precioInput.value = '';
+            stockInput.value = '';
+            stockInput.removeAttribute('max');
+            if (document.getElementById('stockDisponibleMsg')) {
+                document.getElementById('stockDisponibleMsg').remove();
+            }
+            margenInfo.textContent = '';
+            calcularGanancias();
+            calcularPrecioFinal();
+            validarFormulario();
+            return;
+        }
+
+        // Obtener datos del producto seleccionado desde las opciones
+        const selectedOption = this.options[this.selectedIndex];
+        const producto = {
+            id: productoId,
+            nombre: selectedOption.dataset.nombre,
+            descripcion: selectedOption.dataset.descripcion,
+            marca: selectedOption.dataset.marca,
+            costo: parseFloat(selectedOption.dataset.costo) || 0,
+            stock: parseInt(selectedOption.dataset.stock) || 0
+        };
+
+        // Autocompletar campos si están vacíos o no han sido modificados
+        if (!nombreInput.value || nombreInput.value === producto.nombre) {
+            nombreInput.value = producto.nombre;
+        }
+        if (!descripcionInput.value || descripcionInput.value === producto.descripcion) {
+            descripcionInput.value = producto.descripcion;
+        }
+        if (!marcaInput.value || marcaInput.value === producto.marca) {
+            marcaInput.value = producto.marca;
+        }
+
+        // Siempre actualizar costo
+        costoInput.value = producto.costo.toFixed(2);
+
+        // Calcular precio con margen del 50% como mínimo solo si no hay valor
+        if (!precioInput.value) {
+            const precioMinimo = (producto.costo * 1.5).toFixed(2);
+            precioInput.value = precioMinimo;
+        }
+
+        // Sugerir stock inicial si no hay valor
+        if (!stockInput.value) {
+            stockInput.value = Math.max(1, producto.stock || 1);
+        }
+
+        // Limitar el stock máximo permitido según el proveedor
+        stockInput.max = producto.stock;
+        if (parseInt(stockInput.value) > producto.stock) {
+            stockInput.value = producto.stock;
+        }
+        // Mostrar mensaje de stock disponible
+        let stockMsg = document.getElementById('stockDisponibleMsg');
+        if (!stockMsg) {
+            stockMsg = document.createElement('div');
+            stockMsg.id = 'stockDisponibleMsg';
+            stockMsg.className = 'form-text text-info';
+            stockInput.parentNode.appendChild(stockMsg);
+        }
+        stockMsg.textContent = `Stock disponible del proveedor: ${producto.stock}`;
+
+        actualizarMargen();
+        calcularGanancias();
+        calcularPrecioFinal();
+        validarFormulario();
+    });
+
+    // Event listeners para validaciones y cálculos
+    [stockInput, stockMinimoInput, stockMaximoInput].forEach(input => {
+        input.addEventListener('input', () => {
+            validarFormulario();
+            calcularGanancias();
+        });
+    });
+
+    [precioInput, costoInput].forEach(input => {
+        input.addEventListener('input', () => {
+            actualizarMargen();
+            validarFormulario();
+            calcularGanancias();
+            calcularPrecioFinal();
+        });
+    });
+
+    descuentoInput.addEventListener('input', () => {
+        calcularPrecioFinal();
+        calcularGanancias();
+        validarFormulario();
+    });
+
+    // Validar al enviar el formulario
+    document.getElementById('productForm').addEventListener('submit', function(event) {
+        if (!validarFormulario()) {
+            event.preventDefault();
+            showAlert('Por favor corrija los errores en el formulario', 'danger');
+        }
+    });
+
+    // Validar que el usuario no ingrese más stock del permitido manualmente
+    stockInput.addEventListener('input', function() {
+        const max = parseInt(stockInput.max);
+        if (max && parseInt(stockInput.value) > max) {
+            stockInput.value = max;
+            showAlert(`No puedes ingresar un stock mayor al disponible del proveedor (${max})`, 'warning');
+        }
+    });
+
+    // Agregar sección de ganancias potenciales al DOM
+    const gananciasSection = document.createElement('div');
+    gananciasSection.className = 'card mt-4';
+    gananciasSection.innerHTML = `
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Ganancias Potenciales</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Por Unidad</h6>
+                            <p class="card-text display-6 text-success" id="gananciaUnidad">$0.00</p>
+                            <small class="text-muted">Ganancia por producto vendido</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Stock Actual</h6>
+                            <p class="card-text display-6 text-primary" id="gananciaStock">$0.00</p>
+                            <small class="text-muted">Ganancia potencial con stock actual</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Stock Máximo</h6>
+                            <p class="card-text display-6 text-info" id="gananciaMaxima">$0.00</p>
+                            <small class="text-muted">Ganancia potencial con stock máximo</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.querySelector('.admin-form').appendChild(gananciasSection);
+
+    // Llamar a las funciones inicialmente
+    calcularPrecioFinal();
+    calcularGanancias();
+    actualizarMargen();
+    validarFormulario();
+});
+</script>
+{% endblock %}

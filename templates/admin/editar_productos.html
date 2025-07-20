@@ -1,0 +1,380 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Editar Producto{% endblock %}
+
+{% block content %}
+<div class="admin-form">
+    <h4 class="mb-4">Editar Producto</h4>
+    {% if producto.proveedor_id %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle me-2"></i>
+        Este producto está asociado a un proveedor. Solo algunos campos son editables.
+    </div>
+    {% endif %}
+    <form method="POST" action="{{ url_for('editar_producto', producto_id=producto.id) }}" id="productForm">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre del Producto</label>
+                <input type="text" name="nombre" class="form-control" value="{{ producto.nombre }}" 
+                    {% if producto.proveedor_id %}readonly{% else %}required{% endif %}>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Subcategoría</label>
+                <select name="categoria_id" class="form-select" {% if producto.proveedor_id %}disabled{% else %}required{% endif %}>
+                    <option value="">Seleccionar subcategoría</option>
+                    {% for subcategoria in subcategorias %}
+                    <option value="{{ subcategoria.id }}" {% if subcategoria.id == producto.categoria_id %}selected{% endif %}>
+                        {{ subcategoria.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if producto.proveedor_id %}
+                <input type="hidden" name="categoria_id" value="{{ producto.categoria_id }}">
+                {% endif %}
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Precio</label>
+                <input type="number" step="0.01" name="precio" id="precio" class="form-control" value="{{ producto.precio }}" required min="0">
+                <div id="precioError" class="invalid-feedback"></div>
+                <div id="margenInfo" class="form-text mt-1"></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Costo</label>
+                <input type="number" step="0.01" name="costo" id="costo" class="form-control" 
+                    value="{{ costo_proveedor if costo_proveedor else producto.costo|default(0.0) }}" 
+                    {% if producto.proveedor_id %}readonly{% else %}required min="0"{% endif %}>
+                <div id="costoError" class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Existenciak</label>
+                <input type="number" name="stock" id="stock" class="form-control" value="{{ producto.stock }}" required min="0">
+                <div id="stockError" class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Stock Mínimo</label>
+                <input type="number" name="stock_minimo" id="stock_minimo" class="form-control" 
+                    value="{{ producto.stock_minimo }}" required min="0" {% if producto.proveedor_id %}readonly{% endif %} readonly>
+                <div id="stockMinimoError" class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Stock Máximo</label>
+                <input type="number" name="stock_maximo" id="stock_maximo" class="form-control" 
+                    value="{{ producto.stock_maximo }}" required min="0" {% if producto.proveedor_id %}readonly{% endif %} readonly>
+                <div id="stockMaximoError" class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Descuento (%)</label>
+                <input type="number" name="descuento" id="descuento" class="form-control" value="{{ producto.descuento }}" 
+                    min="0" max="100">
+                <small class="text-muted">Aplicar descuento al precio del producto</small>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Precio con Descuento</label>
+                <input type="text" id="precio_final" class="form-control" readonly>
+                <div class="form-text">Precio final que verá el cliente</div>
+            </div>
+            <div class="col-12 mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea name="descripcion" class="form-control" rows="3" 
+                    {% if producto.proveedor_id %}readonly{% else %}required{% endif %}>{{ producto.descripcion }}</textarea>
+            </div>
+            <div class="col-12 mb-3">
+                <label class="form-label">URL de la Imagen</label>
+                <input type="text" name="imagen" class="form-control" value="{{ producto.imagen }}" 
+                    placeholder="https://example.com/image.jpg">
+                <small class="text-muted">URL actual: {{ producto.imagen }}</small>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Marca</label>
+                <input type="text" name="marca" class="form-control" value="{{ producto.marca }}" 
+                    {% if producto.proveedor_id %}readonly{% endif %}>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="form-check form-switch mt-4">
+                    <input class="form-check-input" type="checkbox" id="destacado" name="destacado" 
+                        {% if producto.destacado %}checked{% endif %}>
+                    <label class="form-check-label" for="destacado">
+                        Producto destacado
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <a href="{{ url_for('admin_productos') }}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary" id="submitButton">Guardar Cambios</button>
+        </div>
+    </form>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Ganancias Potenciales</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card bg-light mb-3">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Por Unidad</h6>
+                        <p class="card-text display-6 text-success" id="gananciaUnidad">$0.00</p>
+                        <small class="text-muted">Ganancia por producto vendido</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light mb-3">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Stock Actual</h6>
+                        <p class="card-text display-6 text-primary" id="gananciaStock">$0.00</p>
+                        <small class="text-muted">Ganancia potencial con stock actual</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light mb-3">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Stock Máximo</h6>
+                        <p class="card-text display-6 text-info" id="gananciaMaxima">$0.00</p>
+                        <small class="text-muted">Ganancia potencial con stock máximo</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stockInput = document.getElementById('stock');
+    const stockMinimoInput = document.getElementById('stock_minimo');
+    const stockMaximoInput = document.getElementById('stock_maximo');
+    const precioInput = document.getElementById('precio');
+    const costoInput = document.getElementById('costo');
+    const descuentoInput = document.getElementById('descuento');
+    const precioFinalInput = document.getElementById('precio_final');
+    const submitButton = document.getElementById('submitButton');
+    const stockError = document.getElementById('stockError');
+    const stockMinimoError = document.getElementById('stockMinimoError');
+    const stockMaximoError = document.getElementById('stockMaximoError');
+    const precioError = document.getElementById('precioError');
+    const costoError = document.getElementById('costoError');
+    const margenInfo = document.getElementById('margenInfo');
+    const gananciaUnidadEl = document.getElementById('gananciaUnidad');
+    const gananciaStockEl = document.getElementById('gananciaStock');
+    const gananciaMaximaEl = document.getElementById('gananciaMaxima');
+
+    // Si el producto está asociado a un proveedor y hay información de stock disponible, limitar el stock máximo
+    {% if producto.proveedor_id and costo_proveedor is not none %}
+    const stockProveedor = {{ costo_proveedor|int if costo_proveedor is not none else 0 }}; // Usar el stock real si está disponible
+    if (stockProveedor > 0) {
+        stockInput.max = stockProveedor;
+        // Mostrar mensaje de stock disponible
+        let stockMsg = document.getElementById('stockDisponibleMsg');
+        if (!stockMsg) {
+            stockMsg = document.createElement('div');
+            stockMsg.id = 'stockDisponibleMsg';
+            stockMsg.className = 'form-text text-info';
+            stockInput.parentNode.appendChild(stockMsg);
+        }
+        stockMsg.textContent = `Stock disponible del proveedor: ${stockProveedor}`;
+        // Validar que el usuario no ingrese más stock del permitido manualmente
+        stockInput.addEventListener('input', function() {
+            const max = parseInt(stockInput.max);
+            if (max && parseInt(stockInput.value) > max) {
+                stockInput.value = max;
+                // Mostrar alerta de advertencia
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+                alertDiv.innerHTML = `No puedes ingresar un stock mayor al disponible del proveedor (${max})<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+                document.querySelector('.admin-form').prepend(alertDiv);
+                setTimeout(() => alertDiv.remove(), 4000);
+            }
+        });
+    }
+    {% endif %}
+
+    // Función para calcular y mostrar el margen
+    function actualizarMargen() {
+        const costo = parseFloat(costoInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+
+        if (costo > 0 && precio > 0) {
+            const margen = ((precio - costo) / costo) * 100;
+            const ganancia = precio - costo;
+
+            margenInfo.textContent = `Margen: ${margen.toFixed(2)}% (Ganancia: $${ganancia.toFixed(2)})`;
+
+            // Cambiar color según el margen
+            if (margen < 50) {
+                margenInfo.style.color = '#dc3545';
+                margenInfo.innerHTML += ' ❌ (Mínimo 50% requerido)';
+            } else {
+                margenInfo.style.color = '#28a745';
+                margenInfo.innerHTML += ' ✅';
+            }
+        } else {
+            margenInfo.textContent = '';
+        }
+    }
+
+    // Función para validar el formulario
+    function validarFormulario() {
+        let isValid = true;
+        const stock = parseInt(stockInput.value) || 0;
+        const stockMinimo = parseInt(stockMinimoInput.value) || 0;
+        const stockMaximo = parseInt(stockMaximoInput.value) || 0;
+        const costo = parseFloat(costoInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+
+        // Reset errors
+        stockError.textContent = '';
+        stockMinimoError.textContent = '';
+        stockMaximoError.textContent = '';
+        precioError.textContent = '';
+        costoError.textContent = '';
+        stockInput.classList.remove('is-invalid');
+        stockMinimoInput.classList.remove('is-invalid');
+        stockMaximoInput.classList.remove('is-invalid');
+        precioInput.classList.remove('is-invalid');
+        costoInput.classList.remove('is-invalid');
+
+        // Validación de stock
+        if (stockMinimo > stockMaximo) {
+            stockMinimoError.textContent = 'El stock mínimo no puede ser mayor que el stock máximo.';
+            stockMinimoInput.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (stock < stockMinimo) {
+            stockError.textContent = `El stock debe ser mayor o igual a ${stockMinimo}.`;
+            stockInput.classList.add('is-invalid');
+            isValid = false;
+        } else if (stock > stockMaximo) {
+            stockError.textContent = `El stock debe ser menor o igual a ${stockMaximo}.`;
+            stockInput.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Validación de costo
+        if (!costoInput.readOnly && costo <= 0) {
+            costoError.textContent = 'El costo debe ser mayor que cero.';
+            costoInput.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Validación de precio vs costo
+        if (costo > 0 && precio > 0) {
+            const margenMinimo = 50; // 50% mínimo
+            const margenActual = ((precio - costo) / costo) * 100;
+
+            if (margenActual < margenMinimo) {
+                const precioMinimo = (costo * (1 + margenMinimo/100)).toFixed(2);
+                precioError.textContent = `El precio debe ser al menos $${precioMinimo} para un margen del 50%.`;
+                precioInput.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+
+        // Validación de descuento
+        const descuento = parseFloat(descuentoInput.value) || 0;
+        if (descuento < 0 || descuento > 100) {
+            descuentoInput.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            descuentoInput.classList.remove('is-invalid');
+        }
+
+        submitButton.disabled = !isValid;
+        return isValid;
+    }
+
+    // Función para calcular el precio con descuento
+    function calcularPrecioFinal() {
+        const precio = parseFloat(precioInput.value) || 0;
+        const descuento = parseFloat(descuentoInput.value) || 0;
+
+        if (descuento > 0) {
+            const precioFinal = precio * (1 - descuento / 100);
+            precioFinalInput.value = precioFinal.toFixed(2);
+        } else {
+            precioFinalInput.value = precio.toFixed(2);
+        }
+    }
+
+    // Función para calcular y mostrar ganancias
+    function calcularGanancias() {
+        const costo = parseFloat(costoInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+        const descuento = parseFloat(descuentoInput.value) || 0;
+        const stock = parseInt(stockInput.value) || 0;
+        const stockMaximo = parseInt(stockMaximoInput.value) || 0;
+
+        const precioFinal = descuento > 0 ? precio * (1 - descuento / 100) : precio;
+        const gananciaPorUnidad = precioFinal - costo;
+        const gananciaStock = gananciaPorUnidad * stock;
+        const gananciaMaxima = gananciaPorUnidad * stockMaximo;
+
+        // Mostrar "N/A" para productos sin costo
+        if (costo <= 0) {
+            gananciaUnidadEl.textContent = 'N/A';
+            gananciaStockEl.textContent = 'N/A';
+            gananciaMaximaEl.textContent = 'N/A';
+            gananciaUnidadEl.style.color = '#6c757d';
+            gananciaStockEl.style.color = '#6c757d';
+            gananciaMaximaEl.style.color = '#6c757d';
+        } else {
+            gananciaUnidadEl.textContent = `$${gananciaPorUnidad.toFixed(2)}`;
+            gananciaStockEl.textContent = `$${gananciaStock.toFixed(2)}`;
+            gananciaMaximaEl.textContent = `$${gananciaMaxima.toFixed(2)}`;
+            gananciaUnidadEl.style.color = gananciaPorUnidad >= 0 ? '#28a745' : '#dc3545';
+            gananciaStockEl.style.color = gananciaStock >= 0 ? '#007bff' : '#dc3545';
+            gananciaMaximaEl.style.color = gananciaMaxima >= 0 ? '#17a2b8' : '#dc3545';
+        }
+    }
+
+    // Event listeners para validaciones y cálculos
+    [stockInput, stockMinimoInput, stockMaximoInput].forEach(input => {
+        input.addEventListener('input', () => {
+            validarFormulario();
+            calcularGanancias();
+        });
+    });
+
+    [precioInput, costoInput].forEach(input => {
+        input.addEventListener('input', () => {
+            actualizarMargen();
+            validarFormulario();
+            calcularGanancias();
+            calcularPrecioFinal();
+        });
+    });
+
+    descuentoInput.addEventListener('input', () => {
+        calcularPrecioFinal();
+        calcularGanancias();
+        validarFormulario();
+    });
+
+    // Validar al enviar el formulario
+    document.getElementById('productForm').addEventListener('submit', function(event) {
+        if (!validarFormulario()) {
+            event.preventDefault();
+            // Mostrar alerta de error
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                Por favor corrija los errores en el formulario
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.querySelector('.admin-form').prepend(alertDiv);
+        }
+    });
+
+    // Llamar a las funciones inicialmente
+    calcularPrecioFinal();
+    calcularGanancias();
+    actualizarMargen();
+    validarFormulario();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,350 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Notificaciones{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Notificaciones de Stock Bajo -->
+    <div class="col-lg-6 mb-4">
+        <div class="data-card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Alertas de Stock Bajo
+                </h5>
+                <span class="badge bg-warning">{{ productos|length }}</span>
+            </div>
+            
+            {% if productos %}
+            <div class="notification-list">
+                {% for producto in productos %}
+                <div class="notification-item alert alert-warning fade show">
+                    <div class="notification-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <div class="notification-content">
+                        <h6>{{ producto.nombre }}</h6>
+                        <p>
+                            Stock actual: <strong>{{ producto.stock }}</strong> | 
+                            Stock mínimo: <strong>{{ producto.stock_minimo }}</strong>
+                            <br>
+                            <small class="text-muted">Diferencia: {{ producto.stock_minimo - producto.stock }} unidades</small>
+                        </p>
+                        <div class="progress" style="height: 5px;">
+                            {% set progress = (producto.stock / producto.stock_minimo) * 100 %}
+                            <div class="progress-bar bg-danger" role="progressbar" 
+                                 style="width: {{ progress }}%;" 
+                                 aria-valuenow="{{ progress }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="notification-actions">
+                        <a href="{{ url_for('agregar_compra') }}" 
+                           class="btn btn-sm btn-outline-primary edit-notification"
+                           title="Comprar producto"
+                           data-bs-toggle="tooltip">
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                        </a>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                ¡Todo en orden! No hay productos con stock bajo.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Otras Notificaciones -->
+    <div class="col-lg-6 mb-4">
+        <div class="data-card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-bell text-primary me-2"></i>
+                    <p>Otras Notificaciones del Sistema</p>
+                </h5>
+            </div>
+            
+            <div class="notification-list">
+                <!-- Pedidos Pendientes -->
+                {% if pedidos_pendientes > 0 %}
+                <div class="notification-item alert-warning alert-dismiss-warning fade show">
+                    <div class="notification-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="notification-content">
+                        <h6>Pedidos pendientes de procesar</h6>
+                        <p>
+                            Hay <strong>{{ pedidos_pendientes }}</strong> pedidos esperando atención.
+                            <br>
+                            <small class="text-muted">Últimos 24 horas: {{ pedidos_recientes_pendientes }}</small>
+                        </p>
+                    </div>
+                    <div class="notification-actions">
+                        <a href="{{ url_for('admin_pedidos') }}?estado=pendiente" 
+                           class="btn btn-sm btn-outline-info" 
+                           title="Ver pedidos">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="notification-item alert alert-success">
+                    <div class="notification-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="notification-content">
+                        <h6>Sin pedidos pendientes</h6>
+                        <p>Todos los pedidos han sido procesados.</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Reseñas Nuevas -->
+                <div class="notification-item alert alert-secondary alert-dismissible fade show">
+                    <div class="notification-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="notification-content">
+                        <h6>Reseñas recientes</h6>
+                        <p>
+                            <strong>{{ nuevas_reviews }}</strong> nuevas reseñas hoy.
+                            <br>
+                            <small class="text-muted">Promedio: {{ promedio_reviews|round(1) }}/5</small>
+                        </p>
+                    </div>
+                    <div class="notification-actions">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+                
+                <!-- Actividad Reciente -->
+                <div class="notification-item alert alert-light alert-dismissible fade show">
+                    <div class="notification-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="notification-content">
+                        <h6>Actividad del sistema</h6>
+                        <p>
+                            <strong>{{ nuevos_usuarios }}</strong> nuevos usuarios esta semana.
+                            <br>
+                            <small class="text-muted">Ventas totales: {{ ventas_totales|currency }}</small>
+                        </p>
+                    </div>
+                    <div class="notification-actions">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Rápidas -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="card-icon bg-danger bg-opacity-10 text-danger">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="card-value">{{ productos|length }}</div>
+            <div class="card-title">Productos con stock bajo</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="card-icon bg-warning bg-opacity-10 text-warning">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="card-value">{{ pedidos_pendientes }}</div>
+            <div class="card-title">Pedidos pendientes</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="card-icon bg-info bg-opacity-10 text-info">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="card-value">{{ nuevas_reviews }}</div>
+            <div class="card-title">Reseñas nuevas hoy</div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos para notificaciones */
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.notification-item.alert {
+    margin-bottom: 0;
+}
+
+.notification-icon {
+    font-size: 1.4rem;
+    margin-right: 15px;
+    color: inherit;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex-grow: 1;
+}
+
+.notification-content h6 {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--dark-color);
+}
+
+.notification-content p {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.notification-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    margin-left: 10px;
+}
+
+.notification-actions .btn {
+    margin-bottom: 10px;
+}
+
+/* Colores específicos para tipos de notificación */
+.notification-item.alert-warning {
+    border-left-color: var(--warning-color);
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.notification-item.alert-info {
+    border-left-color: var(--info-color);
+    background-color: rgba(23, 162, 184, 0.1);
+}
+
+.notification-item.alert-success {
+    border-left-color: var(--success-color);
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.notification-item.alert-secondary {
+    border-left-color: #6c757d;
+    background-color: rgba(108, 117, 125, 0.1);
+}
+
+.notification-item.alert-light {
+    border-left-color: #f8f9fa;
+    background-color: rgba(248, 249, 250, 0.2);
+}
+
+/* Efectos hover */
+.notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Barra de progreso personalizada */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    margin-top: 8px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .notification-item {
+        flex-direction: column;
+    }
+    
+    .notification-actions {
+        flex-direction: row;
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .notification-actions .btn {
+        margin-bottom: 0;
+        margin-right: 10px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación para las notificaciones
+    const notificationItems = document.querySelectorAll('.notification-item');
+    
+    notificationItems.forEach((item, index) => {
+        // Animación de entrada
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(20px)';
+        
+        setTimeout(() => {
+            item.style.transition = 'all 0.3s ease-out';
+            item.style.opacity = '1';
+            item.style.transform = 'translateX(0)';
+        }, 100 * index);
+        
+        // Efecto hover
+        item.addEventListener('mouseenter', () => {
+            item.style.transform = 'translateY(-3px)';
+            item.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            item.style.transform = 'translateY(0)';
+            item.style.boxShadow = 'none';
+        });
+    });
+    
+    // Depurar clics en el botón de edición
+    const editButtons = document.querySelectorAll('.edit-notification');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault(); // Cancela el comportamiento predeterminado
+            event.stopPropagation(); // Evita propagación al contenedor
+            console.log('Botón de edición clicado, href:', this.href); // Depuración
+            if (this.href) {
+                window.location.assign(this.href); // Redirige
+            } else {
+                console.error('No se encontró href en el botón de edición');
+            }
+        });
+    });
+
+    // Tooltips para botones
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

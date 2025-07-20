@@ -1,0 +1,951 @@
+{% extends 'usuario/base.html' %}
+
+{% block title %}{{ producto.nombre }} - Tienda Online{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Migas de pan mejoradas -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light p-3 rounded-3 shadow-sm">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('index') }}" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i> Inicio
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('mostrar_categoria', categoria_id=producto.categoria.parent_id) }}" class="text-decoration-none text-primary">
+                    {{ producto.categoria.parent.nombre }}
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('mostrar_categoria', categoria_id=producto.categoria.id) }}" class="text-decoration-none text-primary">
+                    {{ producto.categoria.nombre }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+                {{ producto.nombre }}
+            </li>
+        </ol>
+    </nav>
+    
+    <!-- Contenido principal -->
+    <div class="row g-4">
+        <!-- Galería de imágenes -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4" data-aos="fade-right">
+                <div class="product-main-image">
+                    <img src="{{ producto.imagen }}" class="img-fluid rounded-3 w-100" alt="{{ producto.nombre }}" id="mainProductImage" loading="lazy">
+                </div>
+                
+                <div class="product-thumbnails mt-3">
+                    <div class="row g-2 px-4">
+                        <div class="col-3">
+                            <img src="{{ producto.imagen }}" class="img-thumbnail cursor-pointer" alt="Thumbnail 1" onclick="changeImage(this)">
+                        </div>
+                        <div class="col-3">
+                            <img src="{{ producto.imagen }}" class="img-thumbnail cursor-pointer" alt="Thumbnail 2" onclick="changeImage(this)">
+                        </div>
+                        <div class="col-3">
+                            <img src="{{ producto.imagen }}" class="img-thumbnail cursor-pointer" alt="Thumbnail 3" onclick="changeImage(this)">
+                        </div>
+                        <div class="col-3">
+                            <img src="{{ producto.imagen }}" class="img-thumbnail cursor-pointer" alt="Thumbnail 4" onclick="changeImage(this)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if producto.destacado %}
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="fas fa-star me-2"></i>
+                <div>Producto destacado - Envío gratis en este artículo</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Información del producto -->
+        <div class="col-lg-6" data-aos="fade-left">
+            <div class="product-info">
+                <!-- Encabezado -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h1 class="h2 fw-bold mb-0">{{ producto.nombre }}</h1>
+                    {% if producto.marca %}
+                    <span class="badge bg-primary bg-opacity-10 text-primary fs-6">{{ producto.marca }}</span>
+                    {% endif %}
+                </div>
+                
+               <!-- Valoración -->
+                <div class="product-rating mb-3">
+                    <div class="stars">
+                        {% for i in range(1,6) %}
+                            {% if i <= promedio_calificacion|int %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% elif i-0.5 <= promedio_calificacion %}
+                                <i class="fas fa-star-half-alt text-warning"></i>
+                            {% else %}
+                                <i class="far fa-star text-warning"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ms-2 small text-muted">{{ promedio_calificacion|round(1) }} ({{ total_reviews }} reseña{{ 's' if total_reviews != 1 }})</span>
+                    </div>
+                </div>
+                
+                <!-- Precio -->
+                <div class="product-price mb-4">
+                    {% if producto.descuento > 0 %}
+                    <div class="d-flex align-items-center">
+                        <h2 class="text-danger fw-bold me-3 mb-0">${{ (producto.precio * (1 - producto.descuento / 100))|round(2) }}</h2>
+                        <span class="text-muted text-decoration-line-through">${{ producto.precio|round(2) }}</span>
+                        <span class="badge bg-danger ms-2">Ahorra {{ producto.descuento }}%</span>
+                    </div>
+                    {% else %}
+                    <h2 class="fw-bold">${{ producto.precio }}</h2>
+                    {% endif %}
+                </div>
+                
+                <!-- Descripción corta -->
+                <div class="product-short-description mb-4">
+                    <p class="lead">{{ producto.descripcion }}</p>
+                </div>
+                
+                <!-- Disponibilidad -->
+                <div class="product-availability mb-4">
+                    <div class="d-flex align-items-center">
+                        {% if producto.stock > 0 %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="fw-semibold">Disponible</span>
+                        <span class="text-muted ms-2">({{ producto.stock }} en stock)</span>
+                        {% else %}
+                        <i class="fas fa-times-circle text-danger me-2"></i>
+                        <span class="text-danger">Agotado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Formulario de compra -->
+                <form action="{{ url_for('agregar_carrito', producto_id=producto.id) }}" method="POST" class="mb-4">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label for="cantidad" class="col-form-label fw-semibold">Cantidad:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="number" class="form-control" id="cantidad" name="cantidad" value="1" min="1" max="{{ producto.stock }}">
+                        </div>
+                        <div class="col">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-cart-plus me-2"></i> Añadir al carrito
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Envío y devoluciones -->
+                <div class="product-shipping-info p-3 bg-light rounded-3 mb-4">
+                    <div class="d-flex">
+                        <i class="fas fa-truck text-primary me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1 fw-semibold">Envío y devoluciones</h6>
+                            <p class="small mb-0">Envío estándar: 2-3 días hábiles | Devoluciones gratuitas en 30 días</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Características destacadas -->
+                <div class="product-highlights">
+                    <h5 class="mb-3">Características principales:</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check-circle text-primary me-2"></i> Material premium de alta durabilidad</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-primary me-2"></i> Garantía del fabricante de 1 año</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-primary me-2"></i> Soporte técnico 24/7</li>
+                        <li><i class="fas fa-check-circle text-primary me-2"></i> Compatible con los principales sistemas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pestañas de detalles -->
+    <div class="product-details-container mt-5">
+        <div class="product-tabs-wrapper mb-4">
+            <ul class="nav nav-tabs product-tabs" id="productTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active text-dark" 
+                            id="descripcion-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#descripcion" 
+                            type="button" 
+                            role="tab"
+                            aria-controls="descripcion"
+                            aria-selected="true">
+                        <i class="fas fa-file-alt me-2"></i> Descripción completa
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-dark" 
+                            id="especificaciones-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#especificaciones" 
+                            type="button" 
+                            role="tab"
+                            aria-controls="especificaciones"
+                            aria-selected="false">
+                        <i class="fas fa-list-ul me-2"></i> Especificaciones técnicas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-dark" 
+                            id="opiniones-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#opiniones" 
+                            type="button" 
+                            role="tab"
+                            aria-controls="opiniones"
+                            aria-selected="false">
+                        <i class="fas fa-comment-alt me-2"></i> Opiniones ({{ total_reviews }})
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content product-tabs-content p-4 border border-top-0 rounded-bottom shadow-sm" id="productTabsContent">
+            <!-- Pestaña de Descripción -->
+            <div class="tab-pane fade show active" id="descripcion" role="tabpanel" aria-labelledby="descripcion-tab">
+                <div class="product-description">
+                    <h3 class="h4 mb-4 text-primary">Descripción detallada</h3>
+                    <div class="description-content">
+                        <p class="lead">{{ producto.descripcion_larga|default('Descripción detallada del producto no disponible.') }}</p>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Características principales</h5>
+                                <ul class="list-check">
+                                    <li>Diseño ergonómico para máximo confort</li>
+                                    <li>Materiales de alta calidad y durabilidad</li>
+                                    <li>Tecnología patentada para mejor rendimiento</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Incluye en la caja</h5>
+                                <ul class="list-check">
+                                    <li>Producto principal</li>
+                                    <li>Manual de usuario</li>
+                                    <li>Garantía del fabricante</li>
+                                    <li>Cables y accesorios necesarios</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pestaña de Especificaciones -->
+            <div class="tab-pane fade" id="especificaciones" role="tabpanel" aria-labelledby="especificaciones-tab">
+                <div class="product-specifications">
+                    <h3 class="h4 mb-4 text-primary">Especificaciones técnicas</h3>
+                    <div class="specs-table-container">
+                        <table class="table table-striped table-hover">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="w-25"><i class="fas fa-tag me-2"></i> Marca</th>
+                                    <td>{{ producto.marca }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><i class="fas fa-calendar-alt me-2"></i> Modelo</th>
+                                    <td>2023</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><i class="fas fa-ruler-combined me-2"></i> Dimensiones</th>
+                                    <td>10 x 20 x 5 cm</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><i class="fas fa-weight me-2"></i> Peso</th>
+                                    <td>0.5 kg</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><i class="fas fa-palette me-2"></i> Colores disponibles</th>
+                                    <td>Negro, Blanco, Rojo, Azul</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><i class="fas fa-barcode me-2"></i> SKU</th>
+                                    <td>PROD-{{ producto.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><i class="fas fa-box-open me-2"></i> En stock</th>
+                                    <td>{{ producto.stock }} unidades</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><i class="fas fa-shield-alt me-2"></i> Garantía</th>
+                                    <td>1 año</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pestaña de Opiniones -->
+            <div class="tab-pane fade" id="opiniones" role="tabpanel" aria-labelledby="opiniones-tab">
+                <div class="product-reviews">
+                    <h3 class="h4 mb-4 text-primary">Opiniones de clientes</h3>
+                    <div class="row">
+                        <div class="col-md-5 col-lg-4">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body text-center">
+                                    <h2 class="display-4 fw-bold text-primary">{{ promedio_calificacion|round(1) }}</h2>
+                                    <div class="stars mb-2">
+                                        {% for i in range(1,6) %}
+                                            {% if i <= promedio_calificacion|int %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% elif i-0.5 <= promedio_calificacion %}
+                                                <i class="fas fa-star-half-alt text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <p class="small text-muted">Basado en {{ total_reviews }} opinión{{ 'es' if total_reviews != 1 else '' }}</p>
+                                    
+                                    {% if total_reviews > 0 %}
+                                    <div class="rating-distribution mt-3 text-start">
+                                        {% for i in range(5,0,-1) %}
+                                        <div class="d-flex align-items-center mb-2">
+                                            <small class="me-2">{{i}} estrella{{'s' if i > 1}}</small>
+                                            <div class="progress flex-grow-1" style="height: 8px;">
+                                                {% set count = reviews|selectattr('calificacion', 'equalto', i)|list|count %}
+                                                <div class="progress-bar bg-warning" role="progressbar" 
+                                                     style="width: {{ (count / total_reviews * 100) }}%" 
+                                                     aria-valuenow="{{ count }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="{{ total_reviews }}">
+                                                         
+                                                </div>
+                                            </div>
+                                            <small class="ms-2 text-muted">{{ count }}</small>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Contador de reseñas y botón condicional -->
+                            {% if 'usuario_id' in session %}
+                                <div class="alert alert-info mb-3">
+                                    Has escrito <strong>{{ user_review_count }}</strong> de 3 reseñas para este producto
+                                </div>
+                            {% endif %}
+                            
+                            <button class="btn btn-primary w-100 mb-4"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#reviewModal"
+                                    {% if 'usuario_id' in session and user_review_count >= 3 %}disabled{% endif %}>
+                                <i class="fas fa-pen me-2"></i> Escribir opinión
+                            </button>
+                        </div>
+                        <div class="col-md-7 col-lg-8">
+                            <div class="review-list-container" style="max-height: 500px; overflow-y: auto;">
+                                <div class="review-list">
+                                    {% for review in reviews %}
+                                    <div class="card border-0 shadow-sm mb-3">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <h5 class="mb-0">{{ review.usuario.nombre }}</h5>
+                                                <div class="stars">
+                                                    {% for i in range(1,6) %}
+                                                        {% if i <= review.calificacion %}
+                                                            <i class="fas fa-star text-warning"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star text-warning"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            <p class="text-muted small">Publicado el: {{ review.fecha_creacion.strftime('%d/%m/%Y') }}</p>
+                                            <p class="mb-2">{{ review.comentario }}</p>
+                                            
+                                            {% if 'usuario_id' in session and (review.usuario_id == session['usuario_id'] or session.get('es_admin')) %}
+                                            <div class="review-actions mt-2">
+                                                <button class="btn btn-sm btn-outline-primary me-1 edit-review-btn"
+                                                        data-review-id="{{ review.id }}"
+                                                        data-product-id="{{ review.producto_id }}"
+                                                        data-calificacion="{{ review.calificacion }}"
+                                                        data-comentario="{{ review.comentario }}">
+                                                    <i class="fas fa-edit"></i> Editar
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger delete-review-btn" 
+                                                        data-review-id="{{ review.id }}">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-info">
+                                        No hay opiniones para este producto aún. ¡Sé el primero en opinar!
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Mostrar mensaje si hay muchos comentarios -->
+                            {% if total_reviews > 5 %}
+                            <div class="text-center mt-3">
+                                <p class="text-muted">Mostrando {{ total_reviews }} opiniones. Desplázate para ver todas.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para nueva reseña -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Escribe tu reseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('agregar_review', producto_id=producto.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold mb-3">Calificación</label>
+                        <div class="rating-stars text-center">
+                            {% for i in range(1, 6) %}
+                            <input type="radio" id="star{{i}}" name="calificacion" value="{{i}}" {{ 'checked' if i == 5 }}>
+                            <label for="star{{i}}" class="star mx-1">
+                                <i class="far fa-star fa-2x text-warning"></i>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comentario" class="form-label fw-semibold">Comentario</label>
+                        <textarea class="form-control rounded-3" id="comentario" 
+                                  name="comentario" rows="5" required
+                                  style="min-height: 150px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-paper-plane me-2"></i>Enviar reseña
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal único para editar reseña -->
+<div class="modal fade" id="editReviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Editar tu reseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editReviewForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold mb-3">Calificación</label>
+                         <div class="rating-stars text-center">
+                            {% for i in range(1, 6) %}
+                            <input type="radio" id="edit-star{{i}}" name="calificacion" value="{{i}}">
+                            <label for="edit-star{{i}}" class="star mx-1">
+                                <i class="far fa-star fa-2x text-warning"></i>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-comentario" class="form-label fw-semibold">Comentario</label>
+                        <textarea class="form-control rounded-3" id="edit-comentario" 
+                                  name="comentario" rows="5" required
+                                  style="min-height: 150px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-save me-2"></i>Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Añadir este modal después de los otros modales -->
+<!-- Modal para confirmar eliminación de reseña -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar esta reseña?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteReviewForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos generales */
+    .product-main-image {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .product-main-image img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    .product-thumbnails .img-thumbnail {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: 80px;
+        object-fit: cover;
+    }
+    
+    .product-thumbnails .img-thumbnail:hover {
+        border-color: #0d6efd;
+        transform: scale(1.05);
+    }
+    
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .list-check {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    
+    .list-check li {
+        position: relative;
+        padding-left: 25px;
+        margin-bottom: 8px;
+    }
+    
+    .list-check li:before {
+        content: "\f00c";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        color: #0d6efd;
+    }
+    
+    /* Estilos para las pestañas */
+    .product-tabs .nav-link {
+        color: #212529 !important;
+        font-weight: 600;
+        padding: 12px 20px;
+        border: none;
+        background-color: transparent;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .product-tabs .nav-link:hover {
+        color: #212529 !important;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .product-tabs .nav-link.active {
+        color: #dc3545 !important;
+        background-color: transparent;
+        border: none;
+    }
+    
+    .product-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: #dc3545;
+    }
+    
+    .product-tabs-content {
+        background-color: #fff;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .specs-table-container {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    /* Efectos de animación */
+    .tab-pane {
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .product-main-image {
+            height: 300px;
+        }
+        
+        .product-thumbnails .img-thumbnail {
+            height: 60px;
+        }
+    }
+
+    .rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+    
+    .rating input {
+        display: none;
+    }
+    
+    .rating label {
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: #ddd;
+    }
+    
+    .rating input:checked ~ label {
+        color: #ffc107;
+    }
+    
+    .rating label:hover,
+    .rating label:hover ~ label {
+        color: #ffc107;
+    }
+
+    .rating-distribution .progress {
+        background-color: #e9ecef;
+        border-radius: 4px;
+    }
+
+    .rating-distribution .progress-bar {
+        border-radius: 4px;
+    }
+
+    .review-actions {
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+
+    .review-actions .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* Estilos para modales de reseñas */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    .modal-footer {
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .rating-stars {
+        display: flex;
+        justify-content: center;
+        margin: 0 -0.5rem;
+    }
+
+    .rating-stars input[type="radio"] {
+        display: none;
+    }
+
+    .rating-stars .star {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .rating-stars .star:hover {
+        transform: scale(1.15);
+    }
+
+    .rating-stars input[type="radio"]:checked ~ .star {
+        transform: scale(1.1);
+    }
+
+    /* Mejora el textarea */
+    .modal textarea {
+        min-height: 150px;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .modal textarea:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        outline: none;
+    }
+    
+    /* Estilo para estrellas en modal de reseña */
+    .rating-stars input[type="radio"]:checked + label i,
+    .rating-stars input[type="radio"]:hover + label i {
+        color: #ffc107;
+    }
+    
+    .rating-stars label i {
+        transition: all 0.2s ease;
+    }
+
+    .modal-header {
+    background-color: #1a1a2e;
+    color: #fff;
+    }
+
+    .modal-header .btn-close {
+        filter: invert(1);
+    }
+</style>
+<style>
+    /* Estilos para el sistema de rating */
+    .rating-stars {
+        display: flex;
+        justify-content: center;
+        margin: 0 -0.5rem;
+    }
+    
+    .rating-stars input[type="radio"] {
+        display: none;
+    }
+    
+    .rating-stars .star {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin: 0 0.25rem;
+    }
+    
+    .rating-stars .star:hover {
+        transform: scale(1.15);
+    }
+    
+    .rating-stars input[type="radio"]:checked ~ .star i,
+    .rating-stars input[type="radio"]:hover ~ .star i {
+        color: #ffc107;
+    }
+    
+    .rating-stars label:hover i,
+    .rating-stars label:hover ~ label i {
+        color: #ffc107 !important;
+    }
+    
+    .rating-stars .star i {
+        transition: all 0.2s ease;
+    }
+</style>
+<style>
+    /* Estilos para el contenedor de comentarios con scroll */
+    .review-list-container {
+        max-height: 500px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #ddd #f8f9fa;
+        padding-right: 10px;
+    }
+    
+    .review-list-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .review-list-container::-webkit-scrollbar-track {
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .review-list-container::-webkit-scrollbar-thumb {
+        background-color: #ddd;
+        border-radius: 10px;
+        border: 2px solid #f8f9fa;
+    }
+    
+    .review-list-container::-webkit-scrollbar-thumb:hover {
+        background-color: #ccc;
+    }
+    
+    /* Asegurar que el último elemento no quede cortado */
+    .review-list {
+        padding-bottom: 10px;
+    }
+    
+    /* Espacio entre comentarios */
+    .review-list .card {
+        margin-bottom: 15px;
+    }
+</style>
+
+<script>
+    // Función para cambiar la imagen principal al hacer clic en miniatura
+    function changeImage(element) {
+        const mainImage = document.getElementById('mainProductImage');
+        mainImage.src = element.src;
+    }
+    
+    // Función para inicializar los rating stars
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función para actualizar estrellas en los modales
+        function updateStars(modal, rating) {
+            const stars = modal.querySelectorAll('.star i');
+            stars.forEach((star, index) => {
+                const starValue = index + 1; // Ahora index 0 = 1 estrella, index 1 = 2 estrellas, etc.
+                if (starValue <= rating) {
+                    star.classList.add('fas');
+                    star.classList.remove('far');
+                } else {
+                    star.classList.add('far');
+                    star.classList.remove('fas');
+                }
+            });
+        }
+        
+        // Inicializar estrellas en modal de nueva reseña
+        const newReviewModal = document.getElementById('reviewModal');
+        if (newReviewModal) {
+            newReviewModal.addEventListener('show.bs.modal', function() {
+                const checkedInput = newReviewModal.querySelector('input[type="radio"]:checked');
+                if (checkedInput) {
+                    updateStars(newReviewModal, parseInt(checkedInput.value));
+                }
+            });
+            
+            // Configurar eventos para estrellas en modal de nueva reseña
+            newReviewModal.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    updateStars(newReviewModal, parseInt(this.value));
+                });
+                
+                // Efecto hover
+                const label = newReviewModal.querySelector(`label[for="${this.id}"]`);
+                if (label) {
+                    label.addEventListener('mouseover', () => {
+                        const value = parseInt(this.value);
+                        const stars = newReviewModal.querySelectorAll('.star i');
+                        stars.forEach((star, index) => {
+                            if (index < value) {
+                                star.classList.add('fas');
+                                star.classList.remove('far');
+                            }
+                        });
+                    });
+                    
+                    label.addEventListener('mouseout', () => {
+                        const checkedInput = newReviewModal.querySelector('input[type="radio"]:checked');
+                        const currentRating = checkedInput ? parseInt(checkedInput.value) : 0;
+                        updateStars(newReviewModal, currentRating);
+                    });
+                }
+            });
+        }
+        
+        // Modal de edición
+        const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+        const editReviewForm = document.getElementById('editReviewForm');
+        
+        // Manejar clic en botones de edición
+        document.querySelectorAll('.edit-review-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const reviewId = this.getAttribute('data-review-id');
+                const calificacion = parseInt(this.getAttribute('data-calificacion'));
+                const comentario = this.getAttribute('data-comentario');
+                
+                // Actualizar formulario
+                const ratingInput = document.querySelector(`#editReviewForm input[value="${calificacion}"]`);
+                if (ratingInput) {
+                    ratingInput.checked = true;
+                }
+                document.getElementById('edit-comentario').value = comentario;
+                
+                // Actualizar acción del formulario
+                editReviewForm.action = `/editar_review/${reviewId}`;
+                
+                // Actualizar estrellas visualmente
+                updateStars(document.getElementById('editReviewModal'), calificacion);
+                
+                // Mostrar modal
+                editReviewModal.show();
+            });
+        });
+        
+        // Configurar eventos para estrellas en modal de edición
+        document.querySelectorAll('#editReviewModal input[type="radio"]').forEach(input => {
+            input.addEventListener('change', function() {
+                updateStars(document.getElementById('editReviewModal'), parseInt(this.value));
+            });
+            
+            // Efecto hover
+            const label = document.querySelector(`#editReviewModal label[for="${this.id}"]`);
+            if (label) {
+                label.addEventListener('mouseover', () => {
+                    const value = parseInt(this.value);
+                    const stars = document.querySelectorAll('#editReviewModal .star i');
+                    stars.forEach((star, index) => {
+                        if (index < value) {
+                            star.classList.add('fas');
+                            star.classList.remove('far');
+                        }
+                    });
+                });
+                
+                label.addEventListener('mouseout', () => {
+                    const checkedInput = document.querySelector('#editReviewModal input[type="radio"]:checked');
+                    const currentRating = checkedInput ? parseInt(checkedInput.value) : 0;
+                    updateStars(document.getElementById('editReviewModal'), currentRating);
+                });
+            }
+        });
+    });
+    // Agregar este script al final del bloque de scripts
+    // Configurar modal de confirmación para eliminar reseña
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+        const deleteForm = document.getElementById('deleteReviewForm');
+
+        document.querySelectorAll('.delete-review-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const reviewId = this.getAttribute('data-review-id');
+                deleteForm.action = `/eliminar_review/${reviewId}`;
+                deleteModal.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

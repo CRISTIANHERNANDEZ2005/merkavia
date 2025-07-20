@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Tienda Online</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --success-color: #4cc9f0;
+            --dark-color: #2b2d42;
+            --light-color: #f8f9fa;
+            --danger-color: #e63946;
+            --warning-color: #f48c06;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        
+        .admin-sidebar .logo {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .admin-sidebar .logo h3 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        
+        .admin-sidebar .nav-link {
+            color: rgba(255,255,255,0.7);
+            padding: 12px 20px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+            margin: 5px 0;
+        }
+        
+        .admin-sidebar .nav-link:hover, 
+        .admin-sidebar .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .admin-sidebar .nav-link i {
+            width: 25px;
+            font-size: 1.1rem;
+            margin-right: 10px;
+        }
+        
+        /* Main Content */
+        .admin-main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .admin-header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .admin-header h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: var(--dark-color);
+            margin: 0;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+        
+        /* Dashboard Cards */
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: transform 0.3s;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stats-card .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+        
+        .stats-card .card-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stats-card .card-title {
+            font-size: 1rem;
+            color: #6c757d;
+            margin: 0;
+        }
+        
+        /* Data Tables */
+        .data-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .data-card .card-header {
+            background: transparent;
+            border: none;
+            padding: 0 0 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .data-card .card-title {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--dark-color);
+            margin: 0;
+        }
+        
+        .data-card .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 8px 15px;
+            font-weight: 500;
+        }
+        
+        .data-card .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .table th {
+            font-weight: 600;
+            color: var(--dark-color);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(67, 97, 238, 0.03);
+        }
+        
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: #28a745;
+        }
+        
+        .badge-warning {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #ffc107;
+        }
+        
+        .badge-danger {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: #dc3545;
+        }
+        
+        .badge-info {
+            background-color: rgba(23, 162, 184, 0.15);
+            color: #17a2b8;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-right: 5px;
+            font-size: 0.9rem;
+        }
+        
+        /* Charts */
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        /* Forms */
+        .admin-form {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-container {
+                flex-direction: column;
+            }
+            
+            .admin-sidebar {
+                width: 100%;
+                height: auto;
+            }
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            max-width: 350px;
+        }
+
+        .toast {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            border: none;
+            opacity: 0.95;
+        }
+
+        .toast:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast-success {
+            background-color: rgba(40, 167, 69, 0.95) !important;
+        }
+
+        .toast-danger {
+            background-color: rgba(220, 53, 69, 0.95) !important;
+        }
+
+        .toast-warning {
+            background-color: rgba(255, 193, 7, 0.95) !important;
+        }
+
+        .toast-info {
+            background-color: rgba(23, 162, 184, 0.95) !important;
+        }
+
+        .toast-primary {
+            background-color: rgba(13, 110, 253, 0.95) !important;
+        }
+
+        .toast-body {
+            padding: 1rem;
+            font-weight: 500;
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, var(--dark-color) 0%, #1d1f2e 100%);
+            color: white;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: all 0.3s;
+            position: fixed; /* Añadido */
+            height: 100vh; /* Añadido */
+            overflow-y: auto; /* Añadido */
+        }
+        
+        /* Main Content */
+        .admin-main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            margin-left: 250px; /* Añadido */
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative; /* Para móvil volvemos a posición normal */
+            }
+            
+            .admin-main {
+                margin-left: 0; /* Eliminamos el margen en móvil */
+            }
+        }
+
+
+
+        
+
+        /* Mejoras para el icono del menú desplegable */
+    .nav-dropdown-toggle {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
+        padding-right: 30px; /* Espacio para el icono */
+    }
+    
+    .nav-dropdown-toggle .dropdown-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        transition: transform 0.3s ease;
+        font-size: 0.8rem;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .nav-dropdown-toggle.collapsed .dropdown-icon {
+        transform: translateY(-50%) rotate(0deg);
+    }
+    
+    .nav-dropdown-toggle:not(.collapsed) .dropdown-icon {
+        transform: translateY(-50%) rotate(180deg);
+    }
+    
+    /* Asegurar que el texto no se mueva al abrir/cerrar */
+    .nav-dropdown-toggle > div {
+        flex: 1;
+    }
+    </style></head>
+<body>
+    <div class="admin-container">
+
+
+        <!-- Toast Container -->
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="toast show align-items-center text-white bg-{{ category if category in ['success', 'danger', 'warning', 'info'] else 'primary' }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body d-flex align-items-center">
+                                    {% if category == 'success' %}
+                                        <i class="fas fa-check-circle me-2"></i>
+                                    {% elif category == 'danger' %}
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                    {% elif category == 'warning' %}
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% elif category == 'info' %}
+                                        <i class="fas fa-info-circle me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-bell me-2"></i>
+                                    {% endif %}
+                                    {{ message }}
+                                </div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="logo">
+                <h3><i class="fas fa-crown me-2"></i>Admin Panel</h3>
+            </div>
+            <ul class="nav flex-column mt-4">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'admin_inicio' %}active{% endif %}" href="{{ url_for('admin_inicio') }}">
+                        <i class="fa-solid fa-house"></i> Inicio
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                
+                <!-- Catálogo desplegable -->
+                <li class="nav-item nav-dropdown">
+                    <div class="nav-link nav-dropdown-toggle collapsed" data-bs-toggle="collapse" href="#catalogMenu">
+                        <div>
+                            <i class="fas fa-book me-2"></i> Catálogo
+                        </div>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
+                    </div>
+                    <ul class="nav-dropdown-menu collapse" id="catalogMenu">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_productos' %}active{% endif %}" href="{{ url_for('admin_productos') }}">
+                                <i class="fas fa-box"></i> Productos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_categorias' %}active{% endif %}" href="{{ url_for('admin_categorias') }}">
+                                <i class="fas fa-list"></i> Categorías
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_usuarios' %}active{% endif %}" href="{{ url_for('admin_usuarios') }}">
+                                <i class="fas fa-users"></i> Usuarios
+                            </a>
+                        </li>
+                        <!-- Dentro del menú desplegable de Catálogo, agregar esta opción: -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_proveedores' %}active{% endif %}" href="{{ url_for('admin_proveedores') }}">
+                                <i class="fas fa-truck"></i> Proveedores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_compras' %}active{% endif %}" href="{{ url_for('admin_compras') }}">
+                                <i class="fas fa-boxes"></i> Compradas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'ventas_completadas' %}active{% endif %}" href="{{ url_for('ventas_completadas') }}">
+                                <i class="fas fa-cash-register"></i> Ventas
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item nav-dropdown">
+                    <div class="nav-link nav-dropdown-toggle collapsed" data-bs-toggle="collapse" href="#actionsMenu">
+                        <div>
+                            <i class="fas fa-book me-2"></i> Acciones
+                        </div>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
+                    </div>
+                    <ul class="nav-dropdown-menu collapse" id="actionsMenu">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'agregar_compra' %}active{% endif %}" href="{{ url_for('agregar_compra') }}">
+                                <i class="fas fa-shopping-cart mr-2"></i> Comprar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'vender_productos' %}active{% endif %}" href="{{ url_for('vender_productos') }}">
+                                <i class="fas fa-cash-register me-2"></i> Vender
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_descargas' %}active{% endif %}" href="{{ url_for('admin_descargas') }}">
+                                <i class="fas fa-file-pdf"></i> Descargas
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'admin_pedidos' %}active{% endif %}" href="{{ url_for('admin_pedidos') }}">
+                        <i class="fas fa-shopping-cart"></i> Pedidos
+                    </a>
+                </li>
+                <!-- En base.html, dentro del menú desplegable de Catálogo -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'reportes_inventario' %}active{% endif %}" href="{{ url_for('reportes_inventario') }}">
+                        <i class="fas fa-chart-bar"></i> Reportes Inventario
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_notificaciones') }}">
+                        <i class="fas fa-bell"></i> Notificaciones
+                    </a>
+                </li>
+                <li class="nav-item mt-4">
+                    <a class="nav-link" href="{{ url_for('logout') }}" id="logoutLink">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="admin-main">
+            
+            <!-- Header -->
+            <div class="admin-header">
+                <h1>{% block title %}{% endblock %}</h1>
+                <div class="user-profile">
+                    <img src="https://www.certus.edu.pe/blog/wp-content/uploads/2019/04/certus-seguir-la-carrera-administracion-empresas-1200x720.jpg" alt="Admin">
+                    <div>
+                        <h6 class="mb-0">{{ session['usuario_nombre'] }}</h6>
+                        <small class="text-muted">Administrador</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content Container -->
+            <div id="content-container">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block scripts %}{% endblock %}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cierre automático de toasts después de 5 segundos
+        const toasts = document.querySelectorAll('.toast');
+        toasts.forEach(toast => {
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 5000
+            });
+            bsToast.show();
+            
+            // También puedes cerrarlos haciendo clic
+            toast.addEventListener('click', function() {
+                bsToast.hide();
+            });
+        });
+
+        // Manejo del menú desplegable
+        const dropdownToggles = document.querySelectorAll('.nav-dropdown-toggle');
+        
+        dropdownToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('collapsed');
+                
+                // Cerrar otros menús desplegables abiertos
+                if (!this.classList.contains('collapsed')) {
+                    dropdownToggles.forEach(otherToggle => {
+                        if (otherToggle !== toggle && !otherToggle.classList.contains('collapsed')) {
+                            otherToggle.classList.add('collapsed');
+                            const otherMenu = document.querySelector(otherToggle.getAttribute('href'));
+                            if (otherMenu) {
+                                bootstrap.Collapse.getInstance(otherMenu)?.hide();
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Mantener abierto el menú si la página actual está dentro del catálogo
+        const currentPath = window.location.pathname;
+        const catalogRoutes = [
+            "{{ url_for('admin_productos') }}",
+            "{{ url_for('admin_categorias') }}",
+            "{{ url_for('admin_usuarios') }}",
+            "{{ url_for('admin_compras') }}"
+        ];
+
+        const actionsRoutes = [
+            "{{ url_for('agregar_compra') }}"
+        ];
+        
+       // Manejar el catálogo
+        if (catalogRoutes.includes(currentPath)) {
+            const catalogToggle = document.querySelector('#catalogMenu').previousElementSibling;
+            const catalogMenu = document.getElementById('catalogMenu');
+            
+            if (catalogToggle && catalogMenu) {
+                catalogToggle.classList.remove('collapsed');
+                new bootstrap.Collapse(catalogMenu, { show: true });
+            }
+        }
+
+        // Manejar las acciones
+        if (actionsRoutes.includes(currentPath)) {
+            const actionsToggle = document.querySelector('#actionsMenu').previousElementSibling;
+            const actionsMenu = document.getElementById('actionsMenu');
+            
+            if (actionsToggle && actionsMenu) {
+                actionsToggle.classList.remove('collapsed');
+                new bootstrap.Collapse(actionsMenu, { show: true });
+            }
+        }
+    });
+
+
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

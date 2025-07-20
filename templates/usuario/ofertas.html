@@ -1,0 +1,575 @@
+{% extends 'usuario/base.html' %}
+
+{% block title %}Ofertas Especiales - Tienda Online{% endblock %}
+
+{% block content %}
+<div class="container py-4" data-aos="fade-up" style="padding-top: 20px;">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light p-3 rounded-3 shadow-sm">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('index') }}" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i> Inicio
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+                Ofertas Especiales
+            </li>
+        </ol>
+    </nav>
+    
+    <!-- Encabezado de sección -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-2">Ofertas Especiales</h1>
+            <p class="text-muted mb-0">Descubre nuestras mejores ofertas en productos seleccionados</p>
+        </div>
+        <span class="badge bg-primary bg-opacity-10 text-primary mt-2 mt-md-0">
+            {{ paginacion.total }} productos
+        </span>
+    </div>
+    
+    <div class="row">
+        <!-- Sidebar de filtros -->
+        <div class="col-lg-3 mb-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 80px;" data-aos="fade-right">
+                <div class="card-header bg-primary text-white rounded-top-3 py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-filter me-2"></i>
+                        <h5 class="mb-0">Filtrar Productos</h5>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    <form method="GET" action="{{ url_for('todas_ofertas') }}" class="p-3">
+                        <!-- Filtro por Categorías - Acordeón mejorado -->
+                        <div class="accordion accordion-flush" id="filterAccordion">
+                            <!-- Sección Categorías -->
+                            <div class="accordion-item border-0">
+                                <h6 class="accordion-header">
+                                    <button class="accordion-button bg-transparent fw-bold px-0 py-3" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapseCategories" 
+                                            aria-expanded="false" aria-controls="collapseCategories">
+                                        <i class="fas fa-tags text-primary me-2"></i>
+                                        Categorías
+                                    </button>
+                                </h6>
+                                <div id="collapseCategories" class="accordion-collapse collapse" 
+                                     data-bs-parent="#filterAccordion">
+                                    <div class="accordion-body px-0 py-2">
+                                        <div class="category-filter">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="categoria_id" 
+                                                       id="allCategories" value="" {% if not categoria_id %}checked{% endif %}>
+                                                <label class="form-check-label d-flex align-items-center" for="allCategories">
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill me-2">
+                                                        <i class="fas fa-layer-group"></i>
+                                                    </span>
+                                                    Todas las categorías
+                                                </label>
+                                            </div>
+                                            
+                                            {% for categoria in categorias_principales %}
+                                            <div class="category-group mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="categoria_id" 
+                                                           id="cat{{ categoria.id }}" value="{{ categoria.id }}"
+                                                           {% if categoria_id == categoria.id %}checked{% endif %}>
+                                                    <label class="form-check-label d-flex align-items-center fw-semibold" 
+                                                           for="cat{{ categoria.id }}">
+                                                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill me-2">
+                                                            <i class="fas fa-{{ categoria.icono|default('tag') }}"></i>
+                                                        </span>
+                                                        {{ categoria.nombre }}
+                                                    </label>
+                                                </div>
+                                                
+                                                <!-- Subcategorías -->
+                                                <div class="subcategories ps-4 mt-1">
+                                                    {% for subcategoria in categoria.subcategorias %}
+                                                    <div class="form-check mb-1">
+                                                        <input class="form-check-input" type="radio" name="categoria_id" 
+                                                               id="subcat{{ subcategoria.id }}" value="{{ subcategoria.id }}"
+                                                               {% if categoria_id == subcategoria.id %}checked{% endif %}>
+                                                        <label class="form-check-label d-flex align-items-center" 
+                                                               for="subcat{{ subcategoria.id }}">
+                                                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill me-2">
+                                                                <i class="fas fa-{{ subcategoria.icono|default('tag') }}"></i>
+                                                            </span>
+                                                            {{ subcategoria.nombre }}
+                                                        </label>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sección Precio -->
+                            <div class="accordion-item border-0">
+                                <h6 class="accordion-header">
+                                    <button class="accordion-button bg-transparent fw-bold px-0 py-3" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapsePrice" 
+                                            aria-expanded="false" aria-controls="collapsePrice">
+                                        <i class="fas fa-dollar-sign text-primary me-2"></i>
+                                        Rango de Precio
+                                    </button>
+                                </h6>
+                                <div id="collapsePrice" class="accordion-collapse collapse" 
+                                     data-bs-parent="#filterAccordion">
+                                    <div class="accordion-body px-0 py-2">
+                                        <div class="price-range-slider mb-3">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Mín: ${{ min_precio|default(0)|int }}</span>
+                                                <span class="text-muted small">Máx: ${{ max_precio|default(10000)|int }}</span>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col">
+                                                    <div class="input-group border rounded-3">
+                                                        <span class="input-group-text bg-transparent border-0">$</span>
+                                                        <input type="number" class="form-control border-0" 
+                                                               name="min_precio" placeholder="Mínimo" 
+                                                               value="{{ min_precio }}" min="0" step="1">
+                                                    </div>
+                                                </div>
+                                                <div class="col">
+                                                    <div class="input-group border rounded-3">
+                                                        <span class="input-group-text bg-transparent border-0">$</span>
+                                                        <input type="number" class="form-control border-0" 
+                                                               name="max_precio" placeholder="Máximo" 
+                                                               value="{{ max_precio }}" min="0" step="1">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sección Marcas -->
+                            <div class="accordion-item border-0">
+                                <h6 class="accordion-header">
+                                    <button class="accordion-button bg-transparent fw-bold px-0 py-3" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapseBrands" 
+                                            aria-expanded="false" aria-controls="collapseBrands">
+                                        <i class="fas fa-copyright text-primary me-2"></i>
+                                        Marcas
+                                    </button>
+                                </h6>
+                                <div id="collapseBrands" class="accordion-collapse collapse" 
+                                     data-bs-parent="#filterAccordion">
+                                    <div class="accordion-body px-0 py-2">
+                                        <select class="form-select mb-3" name="marca">
+                                            <option value="">Todas las marcas</option>
+                                            {% for m in marcas %}
+                                                <option value="{{ m }}" {% if marca == m %}selected{% endif %}>{{ m }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if marcas|length > 5 %}
+                                        <div class="brand-search mb-3">
+                                            <input type="text" class="form-control" placeholder="Buscar marca..." id="brandSearch">
+                                            <div class="brand-results mt-2 d-none" id="brandResults"></div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de acción -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary rounded-pill py-2">
+                                <i class="fas fa-filter me-2"></i>Aplicar Filtros
+                            </button>
+                            <a href="{{ url_for('todas_ofertas') }}" class="btn btn-outline-secondary rounded-pill py-2">
+                                <i class="fas fa-undo me-2"></i>Restablecer
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="col-lg-9">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+                <div class="mb-3 mb-md-0">
+                    <form method="GET" action="{{ url_for('todas_ofertas') }}" class="d-flex">
+                        <input type="hidden" name="min_precio" value="{{ min_precio }}">
+                        <input type="hidden" name="max_precio" value="{{ max_precio }}">
+                        <input type="hidden" name="marca" value="{{ marca or '' }}">
+                        <input type="hidden" name="categoria_id" value="{{ categoria_id or '' }}">
+                        <select class="form-select" name="orden" onchange="this.form.submit()" style="width: 220px;">
+                            <option value="destacados" {% if orden == 'destacados' %}selected{% endif %}>Destacados</option>
+                            <option value="precio_asc" {% if orden == 'precio_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
+                            <option value="precio_desc" {% if orden == 'precio_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
+                        </select>
+                    </form>
+                </div>
+                <div class="text-muted small">
+                    Mostrando {{ productos|length }} de {{ paginacion.total }} productos
+                </div>
+            </div>
+            
+            <!-- Lista de productos -->
+            {% if productos %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for producto in productos %}
+                <div class="col" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 50 }}">
+                    <div class="card h-100 border-0 shadow-sm transition-all hover-scale">
+                        {% if producto.descuento > 0 %}
+                        <div class="badge bg-danger position-absolute top-0 start-0 m-2 px-2 py-1">
+                            -{{ producto.descuento }}%
+                        </div>
+                        {% endif %}
+                        {% if producto.destacado %}
+                        <div class="badge bg-warning text-dark position-absolute top-0 end-0 m-2 px-2 py-1">
+                            Destacado
+                        </div>
+                        {% endif %}
+                        
+                        <div class="product-image-container">
+                            <img src="{{ producto.imagen }}" class="card-img-top p-3" alt="{{ producto.nombre }}" loading="lazy">
+                        </div>
+                        
+                        <div class="card-body pt-0">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h3 class="h5 card-title mb-0">{{ producto.nombre }}</h3>
+                                {% if producto.marca %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary small">{{ producto.marca }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="card-text text-muted small mb-3">{{ producto.descripcion|truncate(100) }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                {% if producto.descuento > 0 %}
+                                <div>
+                                    <span class="h5 fw-bold text-primary">${{ (producto.precio * (1 - producto.descuento / 100))|round(2) }}</span>
+                                    <span class="text-muted text-decoration-line-through small ms-2">${{ producto.precio|round(2) }}</span>
+                                </div>
+                                {% else %}
+                                <span class="h5 fw-bold text-primary">${{ producto.precio|round(2) }}</span>
+                                {% endif %}
+                                
+                                <span class="badge bg-success bg-opacity-10 text-success small">
+                                    <i class="fas fa-check-circle me-1"></i> En stock
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent border-0 pt-0">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('detalle_producto', producto_id=producto.id) }}" class="btn btn-outline-primary">
+                                    <i class="far fa-eye me-2"></i>Ver detalles
+                                </a>
+                                <form action="{{ url_for('agregar_carrito', producto_id=producto.id) }}" method="POST">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-cart-plus me-2"></i>Añadir al carrito
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info d-flex align-items-center shadow-sm" role="alert" style="border-left: 4px solid #0dcaf0; background-color: #f8f9fa;">
+                <div class="bg-info bg-opacity-10 rounded-circle p-3 me-3">
+                    <i class="fas fa-info-circle fa-lg text-info"></i>
+                </div>  
+                <div class="alert alert-info d-flex align-items-center animate__animated animate__fadeIn" role="alert" style="border-left: 4px solid #0dcaf0;">
+                    <i class="fas fa-search-minus fa-2x me-3 text-info"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">¡Búsqueda sin resultados!</h5>
+                        <p class="mb-0">Prueba ajustando los filtros o <a href="{{ url_for('todas_ofertas') }}" class="alert-link">Restablece tu busqueda</a></p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Paginación -->
+            {% if paginacion.pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if paginacion.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('todas_ofertas', pagina=paginacion.prev_num, min_precio=min_precio, max_precio=max_precio, marca=marca, categoria_id=categoria_id, orden=orden) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in paginacion.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == paginacion.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('todas_ofertas', pagina=page_num, min_precio=min_precio, max_precio=max_precio, marca=marca, categoria_id=categoria_id, orden=orden) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if paginacion.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('todas_ofertas', pagina=paginacion.next_num, min_precio=min_precio, max_precio=max_precio, marca=marca, categoria_id=categoria_id, orden=orden) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos personalizados */
+    .hover-scale {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .hover-scale:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+    
+    .product-image-container {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+    }
+    
+    .product-image-container img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    .card {
+        border-radius: 8px !important;
+    }
+    
+    .card-header {
+        border-radius: 8px 8px 0 0 !important;
+    }
+    
+    .badge {
+        font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+        .product-image-container {
+            height: 160px;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .sticky-top {
+            position: static !important; /* Desactiva sticky en móviles */
+        }
+    }
+
+    /* Estilos personalizados para el filtro */
+    .accordion-button:not(.collapsed) {
+        background-color: transparent;
+        box-shadow: none;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: transparent;
+    }
+    
+    .category-filter {
+        max-height: 300px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        padding-right: 8px;
+    }
+    
+    .category-filter::-webkit-scrollbar {
+        width: 5px;
+    }
+    
+    .category-filter::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .category-filter::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 10px;
+    }
+    
+    .category-filter::-webkit-scrollbar-thumb:hover {
+        background: #ccc;
+    }
+    
+    .category-group {
+        border-left: 2px solid #e9ecef;
+        padding-left: 12px;
+    }
+    
+    .subcategories {
+        border-left: 2px dashed #e9ecef;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .form-check-label:hover {
+        color: var(--bs-primary);
+    }
+    
+    .price-range-slider {
+        padding: 0 8px;
+    }
+    
+    @media (max-width: 992px) {
+        .category-filter {
+            max-height: 200px;
+        }
+        
+        .sticky-top {
+            position: static !important;
+        }
+    }
+
+    .brand-results {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+    }
+    
+    .brand-option {
+        padding: 0.5rem;
+        cursor: pointer;
+        border-radius: 0.25rem;
+        transition: background-color 0.2s;
+    }
+    
+    .brand-option:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .brand-option.active {
+        background-color: #e9ecef;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const brandSearch = document.getElementById('brandSearch');
+        const brandResults = document.getElementById('brandResults');
+        const brandSelect = document.querySelector('select[name="marca"]');
+        const allBrands = Array.from(brandSelect.options).map(opt => opt.value).filter(Boolean);
+        
+        if (brandSearch && brandResults) {
+            brandSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                brandResults.innerHTML = '';
+                
+                if (searchTerm.length === 0) {
+                    brandResults.classList.add('d-none');
+                    return;
+                }
+                
+                // Filtrar marcas que comiencen con el carácter ingresado
+                const filteredBrands = allBrands.filter(brand => 
+                    brand.toLowerCase().startsWith(searchTerm)
+                );
+                
+                if (filteredBrands.length > 0) {
+                    filteredBrands.forEach(brand => {
+                        const option = document.createElement('div');
+                        option.className = 'brand-option';
+                        option.textContent = brand;
+                        option.addEventListener('click', function() {
+                            brandSelect.value = brand;
+                            brandSearch.value = brand;
+                            brandResults.classList.add('d-none');
+                        });
+                        brandResults.appendChild(option);
+                    });
+                    brandResults.classList.remove('d-none');
+                } else {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'text-muted small';
+                    noResults.textContent = 'No se encontraron marcas';
+                    brandResults.appendChild(noResults);
+                    brandResults.classList.remove('d-none');
+                }
+            });
+            
+            // Ocultar resultados al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!brandSearch.contains(e.target) && !brandResults.contains(e.target)) {
+                    brandResults.classList.add('d-none');
+                }
+            });
+            
+            // Manejar teclado
+            brandSearch.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
+                    const options = brandResults.querySelectorAll('.brand-option');
+                    let activeIndex = -1;
+                    
+                    options.forEach((opt, index) => {
+                        if (opt.classList.contains('active')) {
+                            activeIndex = index;
+                            opt.classList.remove('active');
+                        }
+                    });
+                    
+                    if (e.key === 'ArrowDown') {
+                        activeIndex = (activeIndex + 1) % options.length;
+                    } else if (e.key === 'ArrowUp') {
+                        activeIndex = (activeIndex - 1 + options.length) % options.length;
+                    } else if (e.key === 'Enter' && activeIndex >= 0) {
+                        options[activeIndex].click();
+                        return;
+                    }
+                    
+                    if (options.length > 0 && activeIndex >= 0) {
+                        options[activeIndex].classList.add('active');
+                        options[activeIndex].scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest'
+                        });
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+[file content end]

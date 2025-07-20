@@ -1,0 +1,381 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Gestión de Pedidos{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <h5 class="card-title mb-0">Gestión de Pedidos</h5>
+        <div class="d-flex align-items-center flex-wrap gap-3">
+            <div class="btn-group me-3 mb-2 mb-md-0" id="filters">
+                <button class="btn btn-sm btn-outline-primary filter-btn active" data-estado="">
+                    <i class="fas fa-list me-1"></i>Todos
+                </button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-estado="pendiente">
+                    <i class="fas fa-clock me-1"></i>Pendientes
+                </button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-estado="completado">
+                    <i class="fas fa-check-circle me-1"></i>Completados
+                </button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-estado="cancelado">
+                    <i class="fas fa-times-circle me-1"></i>Cancelados
+                </button>
+            </div>
+            <form id="date-filter-form" class="d-flex align-items-center flex-wrap gap-2">
+                <div class="input-group input-group-sm" style="width: 180px;">
+                    <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                    <input type="date" id="fecha-inicio" name="fecha_inicio" class="form-control form-control-sm" placeholder="Desde">
+                </div>
+                <div class="input-group input-group-sm" style="width: 180px;">
+                    <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                    <input type="date" id="fecha-fin" name="fecha_fin" class="form-control form-control-sm" placeholder="Hasta">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-filter me-1"></i>Filtrar
+                </button>
+                <button type="button" id="clear-filters" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-eraser me-1"></i>Limpiar
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="table-responsive mt-3">
+        <table class="table table-hover align-middle" id="pedidos-table">
+            <thead class="table-light">
+                <tr>
+                    <th width="100"># Pedido</th>
+                    <th>Cliente</th>
+                    <th width="120">Fecha</th>
+                    <th width="120">Total</th>
+                    <th width="150">Método Pago</th>
+                    <th width="150">Estado</th>
+                    <th width="180">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="pedidos-body">
+                {% for pedido in pedidos %}
+                <tr>
+                    <td class="fw-bold">#{{ pedido.id }}</td>
+                    <td>{{ pedido.usuario.nombre }}</td>
+                    <td>{{ pedido.fecha_pedido.strftime('%d %b, %Y') }}</td>
+                    <td class="fw-bold">${{ pedido.total|currency }}</td>
+                    <td>
+                        <span class="badge bg-light text-dark text-capitalize">
+                            <i class="fas {% if pedido.metodo_pago == 'tarjeta' %}fa-credit-card{% else %}fa-money-bill-wave{% endif %} me-1"></i>
+                            {{ pedido.metodo_pago }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if pedido.estado == 'completado' %}
+                        <span class="badge bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-check-circle me-1"></i>Completado
+                        </span>
+                        {% elif pedido.estado == 'pendiente' %}
+                        <span class="badge bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-clock me-1"></i>Pendiente
+                        </span>
+                        {% else %}
+                        <span class="badge bg-danger bg-opacity-10 text-danger">
+                            <i class="fas fa-times-circle me-1"></i>Cancelado
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{{ url_for('admin_detalle_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <form class="flex-grow-1 cambio-estado-form" data-pedido-id="{{ pedido.id }}">
+                                <select name="estado" class="form-select form-select-sm cambio-estado-pedido" data-original-value="{{ pedido.estado }}">
+                                    <option value="pendiente" {% if pedido.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                                    <option value="completado" {% if pedido.estado == 'completado' %}selected{% endif %}>Completado</option>
+                                    <option value="cancelado" {% if pedido.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                                </select>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="no-results" class="text-center text-muted py-5 d-none">
+            <i class="fas fa-box-open fa-3x mb-3"></i>
+            <h5>No se encontraron pedidos</h5>
+            <p class="mb-0">Intenta ajustar los filtros o verifica si hay nuevos pedidos.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos personalizados para la página de pedidos */
+    .filter-btn {
+        min-width: 110px;
+    }
+    
+    #pedidos-table th {
+        white-space: nowrap;
+    }
+    
+    #pedidos-table td, #pedidos-table th {
+        vertical-align: middle;
+    }
+    
+    .cambio-estado-pedido {
+        width: 100%;
+        min-width: 120px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .cambio-estado-pedido:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
+    }
+    
+    .badge {
+        padding: 0.5em 0.75em;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    
+    @media (max-width: 768px) {
+        #filters {
+            order: 2;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        #date-filter-form {
+            order: 1;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        #pedidos-table td:nth-child(2),
+        #pedidos-table th:nth-child(2) {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const pedidosBody = document.getElementById('pedidos-body');
+    const dateFilterForm = document.getElementById('date-filter-form');
+    const fechaInicioInput = document.getElementById('fecha-inicio');
+    const fechaFinInput = document.getElementById('fecha-fin');
+    const clearFiltersButton = document.getElementById('clear-filters');
+    const noResultsDiv = document.getElementById('no-results');
+    let currentEstado = '';
+
+    // Función para cargar pedidos con filtros
+    function loadPedidos(estado, fechaInicio, fechaFin) {
+        const params = new URLSearchParams();
+        if (estado) params.append('estado', estado);
+        if (fechaInicio) params.append('fecha_inicio', fechaInicio);
+        if (fechaFin) params.append('fecha_fin', fechaFin);
+
+        fetch(`/admin/pedidos?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            pedidosBody.innerHTML = '';
+            if (data.success === false) {
+                showToast(data.message, 'danger');
+                noResultsDiv.classList.remove('d-none');
+                return;
+            }
+            
+            if (data.pedidos.length === 0) {
+                noResultsDiv.classList.remove('d-none');
+            } else {
+                noResultsDiv.classList.add('d-none');
+                data.pedidos.forEach(pedido => {
+                    const estadoBadge = {
+                        'completado': `<span class="badge bg-success bg-opacity-10 text-success">
+                                        <i class="fas fa-check-circle me-1"></i>Completado
+                                      </span>`,
+                        'pendiente': `<span class="badge bg-warning bg-opacity-10 text-warning">
+                                         <i class="fas fa-clock me-1"></i>Pendiente
+                                       </span>`,
+                        'cancelado': `<span class="badge bg-danger bg-opacity-10 text-danger">
+                                       <i class="fas fa-times-circle me-1"></i>Cancelado
+                                     </span>`
+                    }[pedido.estado] || '';
+                    
+                    const metodoPagoIcon = pedido.metodo_pago === 'tarjeta' ? 
+                        'fa-credit-card' : 'fa-money-bill-wave';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="fw-bold">#${pedido.id}</td>
+                        <td>${pedido.cliente}</td>
+                        <td>${pedido.fecha}</td>
+                        <td class="fw-bold">$${parseFloat(pedido.total).toFixed(2)}</td>
+                        <td>
+                            <span class="badge bg-light text-dark text-capitalize">
+                                <i class="fas ${metodoPagoIcon} me-1"></i>
+                                ${pedido.metodo_pago}
+                            </span>
+                        </td>
+                        <td>${estadoBadge}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="/admin/pedido/${pedido.id}" class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <form class="flex-grow-1 cambio-estado-form" data-pedido-id="${pedido.id}">
+                                    <select name="estado" class="form-select form-select-sm cambio-estado-pedido" data-original-value="${pedido.estado}">
+                                        <option value="pendiente" ${pedido.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                                        <option value="completado" ${pedido.estado === 'completado' ? 'selected' : ''}>Completado</option>
+                                        <option value="cancelado" ${pedido.estado === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                                    </select>
+                                </form>
+                            </div>
+                        </td>
+                    `;
+                    pedidosBody.appendChild(row);
+                });
+            }
+            attachChangeEstadoEvents();
+        })
+        .catch(error => {
+            console.error('Error al filtrar pedidos:', error);
+            showToast('Error al cargar los pedidos filtrados', 'danger');
+            noResultsDiv.classList.remove('d-none');
+        });
+    }
+
+    // Mostrar notificación toast
+    function showToast(message, type = 'info') {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast show align-items-center text-white bg-${type} border-0`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                                     type === 'danger' ? 'fa-exclamation-circle' : 
+                                     type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        toastContainer.appendChild(toastEl);
+        
+        const bsToast = new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 5000
+        });
+        bsToast.show();
+        
+        toastEl.addEventListener('click', () => bsToast.hide());
+    }
+
+    // Manejar clic en los botones de filtrado por estado
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            currentEstado = this.getAttribute('data-estado');
+            loadPedidos(currentEstado, fechaInicioInput.value, fechaFinInput.value);
+        });
+    });
+
+    // Manejar envío del formulario de fechas
+    dateFilterForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fechaInicio = fechaInicioInput.value;
+        const fechaFin = fechaFinInput.value;
+
+        // Validar que fecha_inicio no sea posterior a fecha_fin
+        if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
+            showToast('La fecha de inicio no puede ser posterior a la fecha de fin', 'warning');
+            return;
+        }
+
+        loadPedidos(currentEstado, fechaInicio, fechaFin);
+    });
+
+    // Manejar limpieza de filtros
+    clearFiltersButton.addEventListener('click', function() {
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        document.querySelector('.filter-btn[data-estado=""]').classList.add('active');
+        currentEstado = '';
+        fechaInicioInput.value = '';
+        fechaFinInput.value = '';
+        loadPedidos('', '', '');
+    });
+
+    // Función para asignar eventos a los selectores de cambio de estado
+    function attachChangeEstadoEvents() {
+        document.querySelectorAll('.cambio-estado-pedido').forEach(select => {
+            select.addEventListener('change', function() {
+                const form = this.closest('.cambio-estado-form');
+                const pedidoId = form.getAttribute('data-pedido-id');
+                const nuevoEstado = this.value;
+                const originalValue = this.getAttribute('data-original-value');
+                const row = this.closest('tr');
+                const badge = row.querySelector('td:nth-child(6) .badge');
+
+                // Mostrar confirmación para cambios importantes
+                if ((originalValue === 'completado' && nuevoEstado !== 'completado') || 
+                    (nuevoEstado === 'cancelado' && originalValue !== 'cancelado')) {
+                    if (!confirm(`¿Estás seguro de cambiar el estado del pedido #${pedidoId} de "${originalValue}" a "${nuevoEstado}"?`)) {
+                        this.value = originalValue;
+                        return;
+                    }
+                }
+
+                fetch(`/admin/pedidos/cambiar_estado/${pedidoId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `estado=${encodeURIComponent(nuevoEstado)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        if (badge) {
+                            // Actualizar el badge visualmente
+                            badge.className = `badge bg-${nuevoEstado === 'completado' ? 'success' : nuevoEstado === 'pendiente' ? 'warning' : 'danger'} bg-opacity-10 text-${nuevoEstado === 'completado' ? 'success' : nuevoEstado === 'pendiente' ? 'warning' : 'danger'}`;
+                            badge.innerHTML = `<i class="fas ${nuevoEstado === 'completado' ? 'fa-check-circle' : nuevoEstado === 'pendiente' ? 'fa-clock' : 'fa-times-circle'} me-1"></i>${nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1)}`;
+                        }
+                        this.setAttribute('data-original-value', nuevoEstado);
+                        
+                        // Si estamos filtrando por estado y el nuevo estado no coincide, ocultar la fila
+                        if (currentEstado && currentEstado !== nuevoEstado) {
+                            row.style.display = 'none';
+                        }
+                    } else {
+                        showToast(data.message, 'danger');
+                        this.value = this.getAttribute('data-original-value');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cambiar el estado:', error);
+                    showToast('Error al cambiar el estado: ' + error.message, 'danger');
+                    this.value = this.getAttribute('data-original-value');
+                });
+            });
+        });
+    }
+
+    // Asignar eventos iniciales
+    attachChangeEstadoEvents();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1203 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Vender Productos{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Vender Productos</h5>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+        </a>
+    </div>
+    
+    <div class="card-body">
+        <div class="row">
+            <!-- Panel izquierdo - Búsqueda y selección de productos -->
+            <div class="col-md-7">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-search me-2"></i>Buscar Productos</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" id="searchProduct" class="form-control" placeholder="Buscar productos...">
+                            <button class="btn btn-primary" type="button" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Filtros -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="filterCategory" class="form-label">Categoría</label>
+                                <select id="filterCategory" class="form-select">
+                                    <option value="">Todas las categorías</option>
+                                    {% for categoria in categorias_principales %}
+                                        <optgroup label="{{ categoria.nombre }}">
+                                            {% for subcategoria in categoria.subcategorias %}
+                                                <option value="{{ subcategoria.id }}">{{ subcategoria.nombre }}</option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="filterStock" class="form-label">Disponibilidad</label>
+                                <select id="filterStock" class="form-select">
+                                    <option value="all">Todos</option>
+                                    <option value="in_stock">En stock</option>
+                                    <option value="low_stock">Stock bajo</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Resultados de búsqueda -->
+                        <div id="searchResults" class="row row-cols-1 row-cols-md-2 g-3">
+                            <!-- Los productos aparecerán aquí -->
+                            <div class="col-12 text-center py-4">
+                                <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">Busque productos para comenzar</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Panel derecho - Carrito y detalles de venta -->
+            <div class="col-md-5">
+                <div class="card sticky-top" style="top: 20px;">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Carrito de Venta</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Selección de cliente -->
+                        <div class="mb-4">
+                            <label for="selectCliente" class="form-label">Cliente</label>
+                            <div class="input-group">
+                                <select id="selectCliente" class="form-select">
+                                    <option value="">Cliente general</option>
+                                    {% for usuario in usuarios %}
+                                        <option value="{{ usuario.id }}" data-email="{{ usuario.email }}" data-identificacion="{{ usuario.identificacion }}">
+                                            {{ usuario.nombre }} ({{ usuario.identificacion }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" id="newClientBtn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div id="clientInfo" class="mt-2 small text-muted" style="display: none;">
+                                <div><strong>Identificación:</strong> <span id="clientId"></span></div>
+                                <div><strong>Email:</strong> <span id="clientEmail"></span></div>
+                            </div>
+                        </div>
+
+                        <!-- Dentro del panel derecho del carrito, después de la selección de cliente -->
+                        <div id="puntosContainer" class="mb-3" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold">Puntos disponibles:</span>
+                                <span id="puntosDisponibles" class="badge bg-primary"></span>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text">Usar puntos</span>
+                                <input type="number" id="puntosUsar" class="form-control" min="0" value="0">
+                                <span class="input-group-text">
+                                    <span id="valorPuntos">$0.00</span> (1 punto = $0.10)
+                                </span>
+                            </div>
+                            <div class="form-text">Máximo descuento: <span id="maxPuntos"></span> puntos</div>
+                        </div>
+                        
+                        <!-- Items del carrito -->
+                        <div id="cartItems" class="mb-3">
+                            <div class="text-center py-3 text-muted">
+                                <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                                <p>No hay productos en el carrito</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Resumen de la venta -->
+                        <div class="border-top pt-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Descuentos:</span>
+                                <span id="discounts">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>IVA (19%):</span>
+                                <span id="tax">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold fs-5">
+                                <span>Total:</span>
+                                <span id="total">$0.00</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Método de pago -->
+                        <div class="mt-4">
+                            <label class="form-label">Método de Pago</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="paymentMethod" id="cash" autocomplete="off" checked>
+                                <label class="btn btn-outline-success" for="cash"><i class="fas fa-money-bill-wave me-2"></i>Efectivo</label>
+                                
+                                <input type="radio" class="btn-check" name="paymentMethod" id="card" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="card"><i class="fas fa-credit-card me-2"></i>Tarjeta</label>
+                                
+                                <input type="radio" class="btn-check" name="paymentMethod" id="transfer" autocomplete="off">
+                                <label class="btn btn-outline-info" for="transfer"><i class="fas fa-exchange-alt me-2"></i>Transferencia</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Descuento especial -->
+                        <div class="mt-3">
+                            <label for="specialDiscount" class="form-label">Descuento Especial (%)</label>
+                            <input type="number" id="specialDiscount" class="form-control" min="0" max="100" value="0">
+                        </div>
+                        
+                        <!-- Botón de finalizar venta -->
+                        <button id="completeSale" class="btn btn-primary w-100 mt-4" disabled>
+                            <i class="fas fa-check-circle me-2"></i>Finalizar Venta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para nuevo cliente -->
+<div class="modal fade" id="newClientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Registrar Nuevo Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newClientForm">
+                    <div class="mb-3">
+                        <label for="clientName" class="form-label">Nombre Completo <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="clientName" required>
+                        <div class="invalid-feedback">Por favor ingrese el nombre del cliente</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="clientIdNumber" class="form-label">Número de Identificación <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="clientIdNumber" required>
+                        <div class="invalid-feedback">Por favor ingrese una identificación válida (6-12 dígitos)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="clientEmailInput" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="clientEmailInput">
+                        <div class="invalid-feedback">Por favor ingrese un correo válido</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="clientPhone" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="clientPhone">
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        La contraseña por defecto será el número de identificación.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveClientBtn">Guardar Cliente</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles de producto -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalTitle">Detalles del Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <img id="productModalImage" src="https://via.placeholder.com/400" class="img-fluid rounded mb-3" alt="Producto">
+                        <div id="productModalStock" class="badge bg-primary"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h4 id="productModalName"></h4>
+                        <p id="productModalDescription" class="text-muted"></p>
+                        <div class="mb-3">
+                            <span class="fw-bold">Precio:</span> 
+                            <span id="productModalPrice" class="fs-4 text-primary"></span>
+                            <span id="productModalDiscount" class="text-danger ms-2"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productQuantity" class="form-label">Cantidad</label>
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary minus-btn" type="button">-</button>
+                                <input type="number" id="productQuantity" class="form-control text-center" value="1" min="1">
+                                <button class="btn btn-outline-secondary plus-btn" type="button">+</button>
+                            </div>
+                            <div class="form-text">Disponible: <span id="availableStock">0</span> unidades</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="addToCartBtn">Agregar al Carrito</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmar venta -->
+<div class="modal fade" id="confirmSaleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Venta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Revise los detalles antes de confirmar la venta.
+                </div>
+                <div class="mb-3">
+                    <h6>Resumen de la Venta</h6>
+                    <div id="saleSummary"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="saleNotes" class="form-label">Notas (Opcional)</label>
+                    <textarea id="saleNotes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="confirmSaleBtn">Confirmar Venta</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    let cart = [];
+    let currentProduct = null;
+    let selectedClient = null;
+    
+    // Elementos del DOM
+    const searchInput = document.getElementById('searchProduct');
+    const searchBtn = document.getElementById('searchBtn');
+    const filterCategory = document.getElementById('filterCategory');
+    const filterStock = document.getElementById('filterStock');
+    const searchResults = document.getElementById('searchResults');
+    const cartItems = document.getElementById('cartItems');
+    const subtotalEl = document.getElementById('subtotal');
+    const discountsEl = document.getElementById('discounts');
+    const taxEl = document.getElementById('tax');
+    const totalEl = document.getElementById('total');
+    const completeSaleBtn = document.getElementById('completeSale');
+    const selectCliente = document.getElementById('selectCliente');
+    const clientInfo = document.getElementById('clientInfo');
+    const clientId = document.getElementById('clientId');
+    const clientEmail = document.getElementById('clientEmail');
+    const newClientBtn = document.getElementById('newClientBtn');
+    const specialDiscount = document.getElementById('specialDiscount');
+    const puntosUsar = document.getElementById('puntosUsar');
+    const puntosContainer = document.getElementById('puntosContainer');
+    
+    // Modales
+    const newClientModal = new bootstrap.Modal(document.getElementById('newClientModal'));
+    const productDetailModal = new bootstrap.Modal(document.getElementById('productDetailModal'));
+    const confirmSaleModal = new bootstrap.Modal(document.getElementById('confirmSaleModal'));
+    
+    // Toast container setup
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+    toastContainer.style.zIndex = '1100';
+    document.body.appendChild(toastContainer);
+    
+    // Cargar clientes al iniciar
+    loadClients();
+    
+    // Event Listeners
+    searchBtn.addEventListener('click', searchProducts);
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchProducts();
+    });
+    filterCategory.addEventListener('change', searchProducts);
+    filterStock.addEventListener('change', searchProducts);
+    selectCliente.addEventListener('change', updateClientInfo);
+    newClientBtn.addEventListener('click', showNewClientModal);
+    specialDiscount.addEventListener('input', updateCartTotals);
+    puntosUsar.addEventListener('input', updatePuntosUsage);
+    
+    // Buscar productos
+    function searchProducts() {
+        const query = searchInput.value.trim();
+        const categoryId = filterCategory.value;
+        const stockFilter = filterStock.value;
+        
+        showLoading(searchResults, 'Buscando productos...');
+        
+        fetch(`/admin/productos/search?q=${query}&category_id=${categoryId}&stock=${stockFilter}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Error en la búsqueda');
+                return response.json();
+            })
+            .then(products => {
+                displayProducts(products);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError(searchResults, 'Error al cargar los productos. Intente nuevamente.');
+            });
+    }
+    
+    // Mostrar productos en resultados
+    function displayProducts(products) {
+        if (products.length === 0) {
+            searchResults.innerHTML = `
+                <div class="col-12 text-center py-4">
+                    <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No se encontraron productos</p>
+                </div>
+            `;
+            return;
+        }
+        
+        searchResults.innerHTML = '';
+        products.forEach(product => {
+            const productCard = document.createElement('div');
+            productCard.className = 'col-md-6 mb-3';
+            productCard.innerHTML = `
+                <div class="card h-100 product-card" data-id="${product.id}">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <img src="${product.imagen || 'https://via.placeholder.com/100'}" 
+                                 class="rounded me-3" width="80" height="80" alt="${product.nombre}">
+                            <div>
+                                <h6 class="mb-1">${product.nombre}</h6>
+                                <p class="small text-muted mb-1">${product.marca || 'Sin marca'}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-primary">$${product.precio.toFixed(2)}</span>
+                                    ${product.descuento > 0 ? 
+                                        `<span class="badge bg-danger">${product.descuento}% OFF</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <button class="btn btn-sm btn-outline-primary w-100 add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-2"></i>Agregar
+                        </button>
+                    </div>
+                </div>
+            `;
+            searchResults.appendChild(productCard);
+            
+            // Agregar evento al botón
+            productCard.querySelector('.add-to-cart-btn').addEventListener('click', function() {
+                showProductDetail(product);
+            });
+        });
+    }
+    
+    // Mostrar detalles del producto en modal
+    function showProductDetail(product) {
+        currentProduct = product;
+        
+        // Actualizar modal con datos del producto
+        document.getElementById('productModalTitle').textContent = product.nombre;
+        document.getElementById('productModalName').textContent = product.nombre;
+        document.getElementById('productModalImage').src = product.imagen || 'https://via.placeholder.com/400';
+        document.getElementById('productModalDescription').textContent = product.descripcion || 'Sin descripción';
+        document.getElementById('productModalPrice').textContent = `$${product.precio.toFixed(2)}`;
+        document.getElementById('availableStock').textContent = product.stock;
+        document.getElementById('productQuantity').max = product.stock;
+        document.getElementById('productQuantity').value = 1;
+        
+        // Mostrar descuento si aplica
+        const discountEl = document.getElementById('productModalDiscount');
+        if (product.descuento > 0) {
+            const finalPrice = product.precio * (1 - product.descuento / 100);
+            discountEl.innerHTML = `<del>$${product.precio.toFixed(2)}</del> <span class="text-success">$${finalPrice.toFixed(2)}</span>`;
+        } else {
+            discountEl.innerHTML = '';
+        }
+        
+        // Mostrar stock
+        const stockEl = document.getElementById('productModalStock');
+        stockEl.textContent = `${product.stock} en stock`;
+        if (product.stock < 5) {
+            stockEl.className = 'badge bg-warning text-dark';
+        } else if (product.stock === 0) {
+            stockEl.className = 'badge bg-danger';
+        } else {
+            stockEl.className = 'badge bg-primary';
+        }
+        
+        // Mostrar modal
+        productDetailModal.show();
+    }
+    
+    // Agregar producto al carrito
+    document.getElementById('addToCartBtn').addEventListener('click', function() {
+        const quantity = parseInt(document.getElementById('productQuantity').value);
+        
+        if (quantity <= 0 || quantity > currentProduct.stock) {
+            showToast('Cantidad no válida', 'danger');
+            return;
+        }
+        
+        // Verificar si el producto ya está en el carrito
+        const existingItem = cart.find(item => item.id === currentProduct.id);
+        
+        if (existingItem) {
+            existingItem.quantity += quantity;
+            showToast(`Cantidad actualizada: ${existingItem.quantity}`, 'info');
+        } else {
+            cart.push({
+                ...currentProduct,
+                quantity: quantity
+            });
+            showToast('Producto agregado al carrito', 'success');
+        }
+        
+        updateCart();
+        productDetailModal.hide();
+    });
+    
+    // Actualizar carrito
+    function updateCart() {
+        if (cart.length === 0) {
+            cartItems.innerHTML = `
+                <div class="text-center py-3 text-muted">
+                    <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                    <p>No hay productos en el carrito</p>
+                </div>
+            `;
+            completeSaleBtn.disabled = true;
+        } else {
+            cartItems.innerHTML = '';
+            cart.forEach(item => {
+                const cartItem = document.createElement('div');
+                cartItem.className = 'd-flex justify-content-between align-items-center mb-3 pb-2 border-bottom';
+                cartItem.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <img src="${item.imagen || 'https://via.placeholder.com/50'}" 
+                             width="40" height="40" class="rounded me-2" alt="${item.nombre}">
+                        <div>
+                            <h6 class="mb-0 small">${item.nombre}</h6>
+                            <small class="text-muted">${item.marca || 'Sin marca'}</small>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">$${(item.precio * item.quantity).toFixed(2)}</div>
+                        <div class="small">
+                            <span class="text-muted">${item.quantity} x </span>
+                            <span>$${item.precio.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+                cartItems.appendChild(cartItem);
+            });
+            completeSaleBtn.disabled = false;
+        }
+        
+        updateCartTotals();
+    }
+    
+    // Actualizar totales del carrito
+    function updateCartTotals() {
+        let subtotal = 0;
+        let discounts = 0;
+        
+        // Calcular subtotal y descuentos por productos
+        cart.forEach(item => {
+            const itemTotal = item.precio * item.quantity;
+            subtotal += itemTotal;
+            
+            if (item.descuento > 0) {
+                const discountAmount = itemTotal * (item.descuento / 100);
+                discounts += discountAmount;
+            }
+        });
+        
+        // Aplicar descuento especial
+        const specialDiscountValue = parseFloat(specialDiscount.value) || 0;
+        if (specialDiscountValue > 0) {
+            discounts += subtotal * (specialDiscountValue / 100);
+        }
+        
+        // Aplicar descuento por puntos (1 punto = $0.10)
+        const puntosUsados = parseInt(puntosUsar.value) || 0;
+        const descuentoPorPuntos = puntosUsados * 0.10;
+        
+        // Validar que el descuento por puntos no exceda el subtotal - otros descuentos
+        const maxDescuentoPuntos = subtotal - discounts;
+        const descuentoPuntosAplicado = Math.min(descuentoPorPuntos, maxDescuentoPuntos);
+        discounts += descuentoPuntosAplicado;
+        
+        // Calcular impuestos y total
+        const tax = (subtotal - discounts) * 0.19; // IVA 19%
+        const total = subtotal - discounts + tax;
+        
+        // Actualizar UI
+        subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+        discountsEl.textContent = `$${discounts.toFixed(2)}`;
+        taxEl.textContent = `$${tax.toFixed(2)}`;
+        totalEl.textContent = `$${total.toFixed(2)}`;
+        
+        // Actualizar valor de puntos mostrado
+        document.getElementById('valorPuntos').textContent = `$${descuentoPorPuntos.toFixed(2)}`;
+        
+        // Si el descuento por puntos es mayor que el permitido, ajustar
+        if (descuentoPorPuntos > maxDescuentoPuntos) {
+            puntosUsar.value = Math.floor(maxDescuentoPuntos * 10);
+            showToast('El descuento por puntos no puede exceder el total de la compra', 'warning');
+        }
+    }
+    
+    // Actualizar uso de puntos
+    function updatePuntosUsage() {
+        const puntos = parseInt(puntosUsar.value) || 0;
+        const valorPuntos = puntos * 0.10;
+        document.getElementById('valorPuntos').textContent = `$${valorPuntos.toFixed(2)}`;
+        updateCartTotals();
+    }
+    
+    // Mostrar información del cliente seleccionado
+    function updateClientInfo() {
+        const selectedOption = selectCliente.options[selectCliente.selectedIndex];
+        
+        if (selectedOption.value) {
+            selectedClient = {
+                id: selectedOption.value,
+                nombre: selectedOption.text.split(' (')[0],
+                identificacion: selectedOption.dataset.identificacion,
+                email: selectedOption.dataset.email,
+                puntos: parseInt(selectedOption.dataset.puntos) || 0
+            };
+            
+            clientId.textContent = selectedClient.identificacion;
+            clientEmail.textContent = selectedClient.email;
+            clientInfo.style.display = 'block';
+            
+            // Mostrar sección de puntos si el cliente tiene puntos
+            if (selectedClient.puntos > 0) {
+                puntosContainer.style.display = 'block';
+                document.getElementById('puntosDisponibles').textContent = selectedClient.puntos;
+                document.getElementById('puntosUsar').max = selectedClient.puntos;
+                document.getElementById('maxPuntos').textContent = Math.min(selectedClient.puntos, Math.floor(getSubtotalSinDescuentos() * 10));
+            } else {
+                puntosContainer.style.display = 'none';
+                puntosUsar.value = 0;
+            }
+        } else {
+            selectedClient = null;
+            clientInfo.style.display = 'none';
+            puntosContainer.style.display = 'none';
+            puntosUsar.value = 0;
+        }
+        
+        updateCartTotals();
+    }
+    
+    // Calcular subtotal sin descuentos
+    function getSubtotalSinDescuentos() {
+        let subtotal = 0;
+        cart.forEach(item => {
+            subtotal += item.precio * item.quantity;
+        });
+        return subtotal;
+    }
+    
+    // Mostrar modal para nuevo cliente
+    function showNewClientModal() {
+        // Limpiar el formulario
+        document.getElementById('newClientForm').reset();
+        newClientModal.show();
+    }
+    
+    // Guardar nuevo cliente
+    document.getElementById('saveClientBtn').addEventListener('click', async function() {
+        const saveBtn = this;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+        
+        try {
+            const name = document.getElementById('clientName').value.trim();
+            const idNumber = document.getElementById('clientIdNumber').value.trim();
+            const email = document.getElementById('clientEmailInput').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            
+            if (!name || !idNumber) {
+                throw new Error('Nombre e identificación son obligatorios');
+            }
+            
+            // Validar identificación (6-12 dígitos)
+            if (!/^\d{6,12}$/.test(idNumber)) {
+                throw new Error('La identificación debe tener entre 6 y 12 dígitos');
+            }
+            
+            // Validar email si se proporcionó
+            if (email && !/^[\w\.-]+@[\w\.-]+\.\w+$/.test(email)) {
+                throw new Error('Correo electrónico no válido');
+            }
+            
+            // Crear objeto con los datos del cliente
+            const clientData = {
+                nombre: name,
+                identificacion: idNumber,
+                email: email || null,
+                telefono: phone || null
+            };
+            
+            // Enviar datos al servidor
+            const response = await fetch('/admin/ventas/agregar_cliente', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(clientData)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Error al registrar el cliente');
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.message || 'Error al registrar el cliente');
+            }
+            
+            // Agregar el nuevo cliente al select
+            const newOption = document.createElement('option');
+            newOption.value = data.cliente.id;
+            newOption.textContent = `${data.cliente.nombre} (${data.cliente.identificacion}) - ${data.cliente.puntos} pts`;
+            newOption.dataset.identificacion = data.cliente.identificacion;
+            newOption.dataset.email = data.cliente.email || '';
+            newOption.dataset.puntos = data.cliente.puntos || 0;
+            
+            // Insertar antes de la opción "Cliente general"
+            const select = document.getElementById('selectCliente');
+            if (select.options.length > 0) {
+                select.insertBefore(newOption, select.options[1]);
+            } else {
+                select.appendChild(newOption);
+            }
+            
+            // Seleccionar el nuevo cliente
+            select.value = newOption.value;
+            updateClientInfo();
+            
+            // Mostrar mensaje de éxito
+            showToast(data.message || 'Cliente registrado con éxito', 'success');
+            
+            // Cerrar modal
+            newClientModal.hide();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showToast(error.message, 'danger');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = 'Guardar Cliente';
+        }
+    });
+    
+    // Finalizar venta
+    completeSaleBtn.addEventListener('click', function() {
+        if (cart.length === 0) return;
+        
+        // Crear resumen de la venta
+        let summaryHTML = `
+            <div class="mb-2"><strong>Cliente:</strong> ${selectedClient ? selectedClient.nombre : 'Cliente general'}</div>
+            <div class="mb-2"><strong>Productos:</strong></div>
+            <ul class="list-group mb-3">
+        `;
+        
+        cart.forEach(item => {
+            summaryHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${item.nombre} (${item.quantity})
+                    <span class="badge bg-primary rounded-pill">$${(item.precio * item.quantity).toFixed(2)}</span>
+                </li>
+            `;
+        });
+        
+        summaryHTML += `
+            </ul>
+            <div class="d-flex justify-content-between mb-1">
+                <span>Subtotal:</span>
+                <span>${subtotalEl.textContent}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span>Descuentos:</span>
+                <span>${discountsEl.textContent}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span>IVA (19%):</span>
+                <span>${taxEl.textContent}</span>
+            </div>
+            <div class="d-flex justify-content-between fw-bold">
+                <span>Total:</span>
+                <span>${totalEl.textContent}</span>
+            </div>
+        `;
+        
+        document.getElementById('saleSummary').innerHTML = summaryHTML;
+        confirmSaleModal.show();
+    });
+    
+    // Confirmar venta
+    document.getElementById('confirmSaleBtn').addEventListener('click', async function() {
+        const confirmBtn = this;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+        
+        try {
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').id;
+            const notes = document.getElementById('saleNotes').value.trim();
+            
+            // Validar que haya productos en el carrito
+            if (cart.length === 0) {
+                throw new Error('No hay productos en el carrito');
+            }
+            
+            const puntosUsados = parseInt(document.getElementById('puntosUsar').value) || 0;
+            
+            // Preparar datos de la venta
+            const saleData = {
+                clientId: selectedClient ? selectedClient.id : null,
+                items: cart.map(item => ({
+                    productId: item.id,
+                    quantity: item.quantity,
+                    price: item.precio,
+                    discount: item.descuento || 0,
+                    puntosUsados: puntosUsados
+                })),
+                subtotal: parseFloat(subtotalEl.textContent.substring(1)),
+                discounts: parseFloat(discountsEl.textContent.substring(1)),
+                tax: parseFloat(taxEl.textContent.substring(1)),
+                total: parseFloat(totalEl.textContent.substring(1)),
+                paymentMethod: paymentMethod,
+                notes: notes
+            };
+            
+            // Mostrar loading
+            const loadingToast = showToast('Procesando venta...', 'info', 0);
+            
+            // Enviar datos al servidor
+            const response = await fetch('/admin/ventas/crear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(saleData)
+            });
+            
+            // Eliminar toast de loading
+            if (loadingToast) {
+                const bsToast = bootstrap.Toast.getInstance(loadingToast);
+                if (bsToast) bsToast.hide();
+            }
+            
+            // Verificar respuesta
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Error HTTP: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.message || 'Error al registrar la venta');
+            }
+            
+            // Mostrar mensaje de éxito
+            let successMessage = `
+                <div class="mb-2">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Venta #${data.pedido_id} registrada con éxito!
+                </div>
+                <div class="mb-1"><strong>Total:</strong> $${data.total.toFixed(2)}</div>
+            `;
+            
+            if (data.puntos_ganados > 0) {
+                successMessage += `<div class="mb-1"><strong>Puntos ganados:</strong> ${data.puntos_ganados}</div>`;
+            }
+            
+            if (puntosUsados > 0) {
+                successMessage += `<div><strong>Puntos usados:</strong> ${puntosUsados}</div>`;
+            }
+            
+            showToast(successMessage, 'success', 10000);
+            
+            // Limpiar carrito y reiniciar
+            cart = [];
+            updateCart();
+            selectCliente.value = '';
+            updateClientInfo();
+            specialDiscount.value = 0;
+            confirmSaleModal.hide();
+            
+            // Opcional: recargar productos para actualizar stocks
+            searchProducts();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showToast(error.message, 'danger');
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Confirmar Venta';
+        }
+    });
+    
+    // Función para cargar clientes
+    async function loadClients() {
+        const select = document.getElementById('selectCliente');
+        
+        // Mostrar estado de carga
+        select.disabled = true;
+        const loadingOption = document.createElement('option');
+        loadingOption.textContent = 'Cargando clientes...';
+        select.innerHTML = '';
+        select.appendChild(loadingOption);
+        
+        try {
+            const response = await fetch('/admin/usuarios/clientes');
+            
+            if (!response.ok) {
+                throw new Error('Error al cargar los clientes');
+            }
+            
+            const clientes = await response.json();
+            
+            // Limpiar y agregar opción por defecto
+            select.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Cliente general';
+            select.appendChild(defaultOption);
+            
+            // Agregar clientes
+            clientes.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id;
+                option.textContent = `${cliente.nombre} (${cliente.identificacion}) - ${cliente.puntos} pts`;
+                option.dataset.identificacion = cliente.identificacion;
+                option.dataset.email = cliente.email;
+                option.dataset.puntos = cliente.puntos;
+                select.appendChild(option);
+            });
+            
+        } catch (error) {
+            console.error('Error:', error);
+            select.innerHTML = '';
+            const errorOption = document.createElement('option');
+            errorOption.textContent = 'Error al cargar clientes';
+            select.appendChild(errorOption);
+            showToast('Error al cargar la lista de clientes', 'danger');
+        } finally {
+            select.disabled = false;
+        }
+    }
+    
+    // Función para mostrar toast
+    function showToast(message, type = 'info', duration = 5000) {
+        const toastId = `toast-${Date.now()}`;
+        const toast = document.createElement('div');
+        toast.id = toastId;
+        toast.className = `toast show align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        // Determinar si el mensaje es HTML o texto plano
+        const isHTML = /<[a-z][\s\S]*>/i.test(message);
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${isHTML ? message : `<div class="fw-bold">${message}</div>`}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Configurar auto-cierre
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: duration > 0,
+            delay: duration
+        });
+        bsToast.show();
+        
+        // Eliminar del DOM cuando se cierre
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+        
+        return toast;
+    }
+    
+    // Función para mostrar estado de carga
+    function showLoading(container, message) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-4">
+                <div class="spinner-border text-primary mb-2" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="text-primary">${message}</p>
+            </div>
+        `;
+    }
+    
+    // Función para mostrar error
+    function showError(container, message) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                <p class="text-danger">${message}</p>
+            </div>
+        `;
+    }
+    
+    // Eventos para cantidad en modal de producto
+    document.querySelector('.minus-btn').addEventListener('click', function() {
+        const quantityInput = document.getElementById('productQuantity');
+        if (quantityInput.value > 1) {
+            quantityInput.value--;
+        }
+    });
+    
+    document.querySelector('.plus-btn').addEventListener('click', function() {
+        const quantityInput = document.getElementById('productQuantity');
+        if (quantityInput.value < currentProduct.stock) {
+            quantityInput.value++;
+        }
+    });
+});
+</script>
+
+
+<style>
+.product-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.add-to-cart-btn {
+    transition: all 0.2s;
+}
+
+.add-to-cart-btn:hover {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.sticky-top {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 20px;
+}
+
+/* Mejoras para el modal de producto */
+#productDetailModal .modal-body img {
+    max-height: 300px;
+    object-fit: contain;
+}
+
+/* Estilo para los botones de cantidad */
+.input-group button {
+    width: 40px;
+}
+
+/* Estilo para el resumen de venta */
+#saleSummary ul {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Estilos para el modal de nuevo cliente */
+#newClientModal .modal-header {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#newClientModal .invalid-feedback {
+    display: none;
+}
+
+#newClientModal .is-invalid {
+    border-color: #dc3545;
+}
+
+#newClientModal .is-invalid + .invalid-feedback {
+    display: block;
+}
+
+.product-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.add-to-cart-btn {
+    transition: all 0.2s;
+}
+
+.add-to-cart-btn:hover {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.sticky-top {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 20px;
+}
+
+/* Mejoras para el modal de producto */
+#productDetailModal .modal-body img {
+    max-height: 300px;
+    object-fit: contain;
+}
+
+/* Estilo para los botones de cantidad */
+.input-group button {
+    width: 40px;
+}
+
+/* Estilo para el resumen de venta */
+#saleSummary ul {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Estilos para el modal de nuevo cliente */
+#newClientModal .modal-header {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#newClientModal .invalid-feedback {
+    display: none;
+}
+
+#newClientModal .is-invalid {
+    border-color: #dc3545;
+}
+
+#newClientModal .is-invalid + .invalid-feedback {
+    display: block;
+}
+
+/* Estilos para el select de clientes */
+#selectCliente option {
+    padding: 8px;
+}
+
+#selectCliente option:hover {
+    background-color: #f8f9fa;
+}
+
+/* Estilos para los toasts */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+    min-width: 300px;
+}
+
+.toast {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    margin-bottom: 1rem;
+}
+
+.toast-body {
+    padding: 1rem;
+}
+
+.toast-body div {
+    word-break: break-word;
+}
+
+/* Estilos para el contenedor de puntos */
+#puntosContainer {
+    transition: all 0.3s ease;
+}
+
+/* Estilos para el botón de guardar cliente cuando está deshabilitado */
+#saveClientBtn:disabled {
+    opacity: 0.7;
+}
+
+/* Estilos para el botón de confirmar venta cuando está deshabilitado */
+#confirmSaleBtn:disabled {
+    opacity: 0.7;
+}
+
+/* Estilos para los mensajes de error */
+.text-danger {
+    color: #dc3545 !important;
+}
+
+/* Estilos para los mensajes de éxito */
+.text-success {
+    color: #198754 !important;
+}
+
+/* Estilos para los mensajes de información */
+.text-info {
+    color: #0dcaf0 !important;
+}
+
+/* Estilos para los mensajes de advertencia */
+.text-warning {
+    color: #ffc107 !important;
+}
+
+/* Estilos para el select de clientes */
+#selectCliente option {
+    padding: 8px;
+}
+
+#selectCliente option:hover {
+    background-color: #f8f9fa;
+}
+
+/* Estilos para los alerts */
+.alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+    min-width: 300px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}

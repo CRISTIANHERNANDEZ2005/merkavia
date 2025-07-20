@@ -1,0 +1,981 @@
+/* Estilos generales */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+main {
+    flex: 1;
+}
+
+.imgnav{
+    height: 50px;
+    width: 150px;
+}
+
+/* NAVBAR MEJORADO */
+.navbar {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    padding: 0.8rem 1rem;
+    z-index: 1050;
+}
+
+
+/* Modales con z-index adecuado */
+#loginModal, #registroModal {
+    z-index: 1060; /* Mayor que el navbar */
+}
+
+/* Modifica estas reglas existentes */
+.dropdown-menu {
+    background: rgba(26, 26, 46, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0 12px 12px 12px; /* Cambiado para que coincida con el estilo del botón */
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 0;
+    margin-top: 0; /* Cambiado de 8px a 0 */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    position: absolute;
+    left: 0;
+    right: auto;
+    min-width: 100%; /* Asegura que tenga al menos el ancho del botón */
+}
+
+/* Añade esto para los dropdowns que se abren hacia la derecha */
+.dropdown-menu-end {
+    left: auto;
+    right: 0;
+    border-radius: 12px 0 12px 12px;
+}
+
+
+/* Transiciones suaves */
+.dropdown-menu {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+}
+
+.nav-item.dropdown.show .dropdown-menu {
+    display: block; /* Mostrar solo cuando tiene la clase show */
+    opacity: 1;
+    pointer-events: auto;
+}
+
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 0.5px;
+    background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.02);
+}
+
+.nav-link {
+    font-weight: 500;
+    position: relative;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    margin: 0 2px;
+}
+
+.nav-link:not(.dropdown-toggle):hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+    width: 80%;
+}
+
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-menu {
+    background: rgba(26, 26, 46, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 0;
+    margin-top: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-item-li{
+    background: rgba(26, 26, 46, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 0;
+    margin-top: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Ajusta los items del dropdown */
+.dropdown-item {
+    color: #f8f9fa;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    border-radius: 0; /* Cambiado de 8px a 0 para mejor apariencia */
+    margin: 0; /* Cambiado de 0 0.5rem a 0 */
+    width: 100%; /* Cambiado de calc(100% - 1rem) a 100% */
+}
+
+.dropdown-item:first-child {
+    border-radius: 0; /* Elimina el borde redondeado superior */
+}
+
+.dropdown-item:last-child {
+    border-radius: 0 0 12px 12px; /* Borde redondeado solo en la parte inferior */
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+    color: #1a1a2e !important;
+    transform: none; /* Elimina el desplazamiento horizontal */
+    padding-left: 1.75rem; /* En su lugar, aumenta el padding para efecto visual */
+}
+
+.modal-message-container {
+    animation-duration: 0.3s;
+}
+.modal-message-container .alert {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 0;
+}
+.animate__fadeIn {
+    animation-duration: 0.3s;
+}
+.animate__fadeOut {
+    animation-duration: 0.5s;
+}
+
+.badge-cart {
+    position: relative;
+    top: -10px;
+    right: 5px;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.4rem;
+    background: linear-gradient(to right, #ff416c, #ff4b2b);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+
+/* Gradiente profesional */
+.gradient-bg {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-bottom: 3px solid rgba(79, 172, 254, 0.5);
+}
+
+/* Botones con gradiente */
+.gradient-btn {
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    border: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.gradient-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+}
+
+.gradient-btn:active {
+    transform: translateY(-1px);
+}
+
+.gradient-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.gradient-btn:hover::after {
+    left: 100%;
+}
+
+/* Iconos en los inputs */
+.input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4facfe;
+    font-size: 1.1rem;
+    z-index: 10;
+}
+
+/* Mejorar espaciado en inputs */
+.form-control-lg {
+    padding: 12px 20px 12px 50px !important;
+    border-radius: 50px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.form-control-lg:focus {
+    border-color: #4facfe;
+    box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
+}
+
+/* Modal header mejorado */
+.modal-header {
+    border-bottom: none;
+    padding: 1.2rem 1.5rem;
+}
+
+/* Footer del modal más limpio */
+.modal-footer {
+    background: #f9f9f9;
+    border-top: 1px solid #eee;
+    padding: 1rem 1.5rem;
+    border-radius: 0 0 15px 15px;
+}
+
+/* Botón cerrar personalizado */
+.btn-close-white {
+    filter: invert(1) brightness(200%);
+}
+
+/* Animación de entrada para los modales */
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.search-container {
+    position: relative;
+    margin-left: 15px;
+}
+
+.search-container input {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50px;
+    padding: 8px 20px 8px 40px;
+    color: white;
+    width: 250px;
+    transition: all 0.3s ease;
+}
+
+.search-container input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+    width: 300px;
+}
+
+.search-container i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* FOOTER MEJORADO */
+.footer {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    padding: 4rem 0 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+}
+
+.footer .footer-logo {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+.footer .footer-about {
+    max-width: 300px;
+    color: #cbd3da;
+    line-height: 1.7;
+}
+
+.footer h5 {
+    position: relative;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.footer h5::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    border-radius: 3px;
+}
+
+.footer-links li {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.footer-links a {
+    color: #cbd3da;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.footer-links a:hover {
+    color: #4facfe;
+    transform: translateX(5px);
+}
+
+.footer-links i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+    color: #4facfe;
+}
+
+.footer-contact li {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.footer-contact i {
+    margin-top: 5px;
+    margin-right: 15px;
+    color: #4facfe;
+    min-width: 20px;
+}
+
+.footer-contact div {
+    color: #cbd3da;
+    line-height: 1.6;
+}
+
+.footer-social {
+    display: flex;
+    margin-top: 20px;
+}
+
+.footer-social a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    transform: translateY(-5px);
+}
+
+.footer-bottom {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px 0;
+    margin-top: 50px;
+}
+
+.footer-bottom p {
+    margin: 0;
+    color: #cbd3da;
+    font-size: 0.9rem;
+}
+
+.newsletter-form {
+    display: flex;
+    margin-top: 20px;
+}
+
+.newsletter-form input {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 30px 0 0 30px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.newsletter-form button {
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    border: none;
+    border-radius: 0 30px 30px 0;
+    padding: 0 20px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.newsletter-form button:hover {
+    background: linear-gradient(to right, #3a9cfc, #00d9e6);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .search-container input {
+        width: 180px;
+    }
+    
+    .search-container input:focus {
+        width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        margin: 15px 0;
+        width: 100%;
+    }
+    
+    .search-container input {
+        width: 100%;
+    }
+    
+    .search-container input:focus {
+        width: 100%;
+    }
+    
+    .footer .col-md-6 {
+        margin-bottom: 30px;
+    }
+}
+
+        /* Notification Styles */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 7000; /* Mayor que el z-index del modal (1050) */
+    width: 90%;
+    max-width: 500px;
+}
+
+.notification {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: none;
+}
+
+.notification.alert-success {
+    background-color: rgba(40, 167, 69, 0.95);
+    color: #fff;
+}
+
+.notification.alert-danger {
+    background-color: rgba(220, 53, 69, 0.95);
+    color: #fff;
+}
+
+.notification.alert-info {
+    background-color: rgba(0, 123, 255, 0.95);
+    color: #fff;
+}
+
+.notification.alert-warning {
+    background-color: rgba(255, 193, 7, 0.95);
+    color: #333;
+}
+
+.notification i {
+    font-size: 1.2rem;
+}
+
+.notification .btn-close {
+    filter: none;
+    opacity: 0.8;
+}
+
+.notification .btn-close:hover {
+    opacity: 1;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+    .notification-container {
+        width: 95%;
+    }
+}
+
+/* Agrega esto al final de tu styles.css */
+.nav-item.dropdown.show .nav-link.dropdown-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px 8px 0 0;
+}
+
+.nav-item.dropdown.show .nav-link.dropdown-toggle::after {
+    width: 80%;
+}
+
+
+
+/* Buscador mejorado */
+.search-container {
+    position: relative;
+    flex-grow: 1;
+    max-width: 600px;
+    margin-left: 15px;
+    transition: all 0.3s ease;
+}
+
+.search-input-wrapper {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.search-container:focus-within .search-input-wrapper {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.5);
+    transform: translateY(-2px);
+}
+
+.search-icon {
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.search-input {
+    background: transparent !important;
+    border: none !important;
+    color: white !important;
+    padding: 12px 20px !important;
+    height: 46px;
+    transition: all 0.3s ease;
+    box-shadow: none !important;
+}
+
+.search-input:focus {
+    background: transparent !important;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.search-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0;
+    transition: all 0.3s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.search-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(3px);
+}
+
+/* Sugerencias con estilo de categorías */
+/* Estilos mejorados para las sugerencias de búsqueda */
+#searchSuggestions {
+    background: rgba(26, 26, 46, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.3s ease forwards;
+    max-height: 400px;
+    overflow-y: auto;
+    color: white;
+}
+
+/* En styles.css */
+#searchSuggestions .no-results {
+    padding: 12px 15px;
+    color: #888;
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.search-suggestion {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-suggestion:last-child {
+    border-bottom: none;
+}
+
+.search-suggestion:hover {
+    background: linear-gradient(to right, rgba(79, 172, 254, 0.15), transparent);
+    padding-left: 25px;
+}
+
+.suggestion-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(79, 172, 254, 0.15);
+    border-radius: 10px;
+    margin-right: 15px;
+    color: #4facfe;
+    font-size: 16px;
+}
+
+.suggestion-info {
+    flex-grow: 1;
+}
+
+.suggestion-name {
+    font-weight: 500;
+    color: white;
+    margin-bottom: 3px;
+    font-size: 0.95rem;
+}
+
+.suggestion-category {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+}
+
+.suggestion-price {
+    color: #4facfe;
+    font-weight: 600;
+    font-size: 0.95rem;
+    min-width: 70px;
+    text-align: right;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.search-suggestion {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-suggestion:last-child {
+    border-bottom: none;
+}
+
+.search-suggestion:hover {
+    background: linear-gradient(to right, rgba(79, 172, 254, 0.15), transparent);
+    padding-left: 25px;
+}
+
+.suggestion-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(79, 172, 254, 0.15);
+    border-radius: 10px;
+    margin-right: 15px;
+    color: #4facfe;
+    font-size: 16px;
+}
+
+.suggestion-info {
+    flex-grow: 1;
+}
+
+.suggestion-name {
+    font-weight: 500;
+    color: white;
+    margin-bottom: 3px;
+    font-size: 0.95rem;
+}
+
+.suggestion-category {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+}
+
+.suggestion-price {
+    color: #4facfe;
+    font-weight: 600;
+    font-size: 0.95rem;
+    min-width: 70px;
+    text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .search-container {
+        margin: 15px 0;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        order: 3;
+        width: 100%;
+        margin: 15px 0 0 0;
+    }
+}
+
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6c757d;
+    z-index: 10;
+}
+
+.toggle-password:hover {
+    color: #0d6efd;
+}
+
+/* Asegurar que el input no quede detrás del icono */
+.position-relative input[type="password"],
+.position-relative input[type="text"] {
+    padding-right: 40px !important;
+}
+
+/* Estilos para mostrar los puntos */
+    .puntos-container {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    
+    .puntos-display {
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, #ffd700, #ffbf00);
+        color: #6a4a00;
+        padding: 8px 12px;
+        border-radius: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        font-weight: bold;
+        cursor: default;
+        transition: all 0.3s ease;
+    }
+    
+    .puntos-display:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    .puntos-display i {
+        margin-right: 8px;
+        font-size: 1.2em;
+    }
+    
+    .puntos-count {
+        font-size: 1.1em;
+        margin-right: 5px;
+    }
+    
+    .puntos-text {
+        font-size: 0.9em;
+    }
+    
+    /* Animación para cuando cambian los puntos */
+    @keyframes puntosChange {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+    .puntos-updated {
+        animation: puntosChange 0.5s ease;
+    }
+
+    /* Agregar al final de styles.css */
+/* Estilos para los inputs del registro */
+#registroModal .form-control-lg {
+    padding: 12px 20px 12px 50px !important;
+    border-radius: 50px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    height: calc(2.5rem + 2px);
+}
+
+#registroModal .form-control-lg:focus {
+    border-color: #4facfe;
+    box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
+}
+
+/* Asegurar que los iconos no se muevan con los errores */
+#registroModal .position-relative .input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4facfe;
+    font-size: 1.1rem;
+    z-index: 10;
+    transition: none !important; /* Desactiva cualquier animación */
+}
+
+#registroModal .position-relative .toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6c757d;
+    z-index: 10;
+    transition: none !important; /* Desactiva cualquier animación */
+}
+
+/* Estilos para los mensajes de error */
+#registroModal .text-danger {
+    padding-left: 50px; /* Alinea con el texto del input */
+    margin-top: 5px;
+    font-size: 0.85rem;
+    position: relative;
+    left: 0;
+    transition: none !important;
+}
+
+/* Ajustar el checkbox de términos */
+#registroModal .form-check {
+    padding-left: 2.5rem;
+    margin-bottom: 1.5rem;
+}
+
+#registroModal .form-check-input {
+    margin-left: -2.5rem;
+    margin-top: 0.25rem;
+}
+
+#registroModal .form-check-label {
+    font-size: 0.9rem;
+}
+
+#registroModal .form-check-label a {
+    color: #4facfe;
+    text-decoration: none;
+}
+
+#registroModal .form-check-label a:hover {
+    text-decoration: underline;
+}

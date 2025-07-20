@@ -1,0 +1,654 @@
+{% extends 'usuario/base.html' %}
+
+{% block title %}Carrito de Compras - Tienda Online{% endblock %}
+
+{% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+    .cart-container {
+        background: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .cart-header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .cart-item {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-bottom: 20px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .cart-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .product-image {
+        height: 120px;
+        width: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #eee;
+    }
+    
+    .product-info {
+        padding: 20px;
+    }
+    
+    .product-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+        font-size: 1.1rem;
+    }
+    
+    .product-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+    
+    .price-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+    }
+    
+    .price-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .price-value {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #333;
+    }
+    
+    .quantity-control {
+        display: flex;
+        align-items: center;
+    }
+    
+    .quantity-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: #f1f3f5;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .quantity-btn:hover {
+        background: #e9ecef;
+    }
+    
+    .quantity-input {
+        width: 50px;
+        text-align: center;
+        border: none;
+        font-weight: 600;
+        font-size: 1rem;
+        margin: 0 10px;
+    }
+    
+    .delete-btn {
+        background: none;
+        border: none;
+        color: #dc3545;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .delete-btn:hover {
+        color: #bd2130;
+        transform: scale(1.1);
+    }
+    
+    .cart-summary {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        margin-top: 20px;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .summary-total {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #333;
+    }
+    
+    .summary-value {
+        font-weight: 600;
+    }
+    
+    .cart-empty {
+        text-align: center;
+        padding: 50px 20px;
+    }
+    
+    .cart-empty-icon {
+        font-size: 5rem;
+        color: #e9ecef;
+        margin-bottom: 20px;
+    }
+    
+    .cart-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+        padding: 10px 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+        border: none;
+        padding: 10px 30px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(106, 17, 203, 0.4);
+    }
+    
+    .cart-badge {
+        background: #ff6b6b;
+        color: white;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        margin-left: 5px;
+    }
+    
+    @media (max-width: 768px) {
+        .product-image {
+            width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        
+        .cart-buttons {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .cart-buttons a {
+            width: 100%;
+            text-align: center;
+        }
+    }
+
+    .updating {
+        opacity: 0.7;
+        position: relative;
+    }
+    
+    .updating::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.7);
+        z-index: 1;
+    }
+    
+    .stock-warning {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 5px;
+        display: none;
+    }
+    
+    .quantity-input:read-only {
+        background-color: transparent;
+        border: none;
+    }
+
+    .delete-modal .modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        border: none;
+    }
+    
+    .delete-modal .modal-header {
+        background: linear-gradient(135deg, #ff6b6b, #dc3545);
+        color: white;
+        border: none;
+    }
+    
+    .delete-modal .modal-body {
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .delete-modal .modal-icon {
+        font-size: 5rem;
+        color: #dc3545;
+        margin-bottom: 20px;
+    }
+    
+    .delete-modal .modal-footer {
+        border: none;
+        justify-content: center;
+        padding-bottom: 30px;
+        padding-top: 10px;
+    }
+    
+    .delete-modal .btn-danger {
+        background: linear-gradient(135deg, #ff6b6b, #dc3545);
+        border: none;
+        padding: 10px 30px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .delete-modal .btn-danger:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    }
+    
+    .delete-modal .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+        padding: 10px 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="cart-container">
+        <div class="cart-header">
+            <h1 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Carrito de Compras</h1>
+            <p class="mb-0">Revisa tus productos antes de finalizar la compra</p>
+        </div>
+        
+        <div class="p-4">
+            {% if items|length == 0 %}
+                <div class="cart-empty">
+                    <div class="cart-empty-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3 class="mb-3">Tu carrito está vacío</h3>
+                    <p class="text-muted mb-4">Aún no has agregado productos a tu carrito de compras</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="fas fa-shopping-bag me-2"></i>¡Comienza a comprar!
+                    </a>
+                </div>
+            {% else %}
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <h4 class="mb-0">Tus Productos</h4>
+                        <span class="cart-badge">{{ items|length }}</span>
+                    </div>
+                    
+                    {% for item in items %}
+                    <div class="cart-item" id="item-{{ item.id }}" data-price="{{ item.producto.precio }}" data-discount="{{ item.producto.descuento }}" data-stock="{{ item.producto.stock }}">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <img src="{{ item.producto.imagen }}" alt="{{ item.producto.nombre }}" class="product-image">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="product-info">
+                                    <h5 class="product-title">{{ item.producto.nombre }}</h5>
+                                    <p class="product-description">{{ item.producto.descripcion|truncate(100) }}</p>
+                                    
+                                    <div class="price-info">
+                                        <div>
+                                            <span class="price-label">Precio unitario:</span>
+                                            {% if item.producto.descuento > 0 %}
+                                                <span class="text-decoration-line-through text-muted me-2">
+                                                    ${{ item.producto.precio|round(2) }}
+                                                </span>
+                                                <span class="price-value text-danger">
+                                                    ${{ (item.producto.precio * (1 - item.producto.descuento/100))|round(2) }}
+                                                </span>
+                                                <span class="badge bg-danger ms-2">{{ item.producto.descuento }}% OFF</span>
+                                            {% else %}
+                                                <span class="price-value">${{ item.producto.precio|round(2) }}</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <form action="{{ url_for('actualizar_carrito', item_id=item.id) }}" method="POST" class="d-flex align-items-center">
+                                            <div class="quantity-control">
+                                                <button type="button" class="quantity-btn minus-btn" onclick="changeQuantity(this, -1)">
+                                                    <i class="fas fa-minus"></i>
+                                                </button>
+                                                <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" class="quantity-input" 
+                                                       id="quantity-{{ item.id }}" onchange="updateQuantity(this)" data-max="{{ item.producto.stock }}">
+                                                <button type="button" class="quantity-btn plus-btn" onclick="changeQuantity(this, 1)">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary ms-2 update-btn" style="display: none;">
+                                                Actualizar
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="stock-warning" id="stock-warning-{{ item.id }}">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                        No hay suficiente stock. Máximo disponible: {{ item.producto.stock }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-center justify-content-center">
+                                <button class="delete-btn" data-item-id="{{ item.id }}" data-delete-url="{{ url_for('eliminar_carrito', item_id=item.id) }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="border-top p-3 bg-light">
+                            <div class="d-flex justify-content-end">
+                                <div>
+                                    <span class="price-label">Subtotal:</span>
+                                    <span class="price-value" id="subtotal-{{ item.id }}">
+                                        ${{ (item.producto.precio * (1 - item.producto.descuento/100) * item.cantidad)|round(2) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="cart-summary">
+                    <h4 class="mb-4">Resumen de la compra</h4>
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span class="summary-value" id="cart-subtotal">${{ subtotal_sin_descuento|round(2) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Envío</span>
+                        <span class="summary-value">Gratis</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Descuentos</span>
+                        <span class="summary-value text-danger" id="cart-discounts">-${{ descuento_total|round(2) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-total">Total</span>
+                        <span class="summary-value summary-total" id="cart-total">${{ total|round(2) }}</span>
+                    </div>
+                    <div class="cart-buttons">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Seguir Comprando
+                        </a>
+                        <a href="{{ url_for('checkout') }}" class="btn btn-primary">
+                            Finalizar Compra <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade delete-modal" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <h4 class="mb-3">¿Eliminar producto del carrito?</h4>
+                <p class="text-muted">Estás a punto de eliminar este producto de tu carrito de compras. ¿Estás seguro que deseas continuar?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash-alt me-2"></i>Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeQuantity(btn, change) {
+    const input = btn.parentElement.querySelector('.quantity-input');
+    const newValue = parseInt(input.value) + change;
+    const maxStock = parseInt(input.dataset.max);
+    
+    if (newValue >= 1 && newValue <= maxStock) {
+        input.value = newValue;
+        updateQuantity(input, true);
+    } else if (newValue > maxStock) {
+        showStockWarning(input.id.split('-')[1]);
+    }
+}
+
+function showStockWarning(itemId) {
+    const warning = document.getElementById(`stock-warning-${itemId}`);
+    warning.style.display = 'block';
+    setTimeout(() => warning.style.display = 'none', 3000);
+}
+
+function updateQuantity(input, saveAutomatically = false) {
+    const itemId = input.id.split('-')[1];
+    const itemElement = document.getElementById(`item-${itemId}`);
+    const basePrice = parseFloat(itemElement.dataset.price);
+    const discount = parseFloat(itemElement.dataset.discount);
+    const quantity = parseInt(input.value);
+    const maxStock = parseInt(input.dataset.max);
+
+    const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+    
+    if (quantity > maxStock) {
+        input.value = maxStock;
+        showStockWarning(itemId);
+        return;
+    }
+    
+    const newSubtotal = (finalPrice * quantity).toFixed(2);
+    document.getElementById(`subtotal-${itemId}`).textContent = `$${newSubtotal}`;
+    
+    if (saveAutomatically) {
+        saveCartItem(itemId, quantity);
+    }
+}
+
+function saveCartItem(itemId, quantity) {
+    const form = document.querySelector(`form[action="/actualizar_carrito/${itemId}"]`);
+    const formData = new FormData();
+    formData.append('cantidad', quantity);
+    
+    const itemElement = document.getElementById(`item-${itemId}`);
+    itemElement.classList.add('updating');
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        itemElement.classList.remove('updating');
+        if (data.success) {
+            if (data.new_subtotal) {
+                document.getElementById(`subtotal-${itemId}`).textContent = `$${data.new_subtotal.toFixed(2)}`;
+            }
+            
+            if (data.cart_totals) {
+                document.getElementById('cart-subtotal').textContent = `$${data.cart_totals.subtotal_sin_descuento.toFixed(2)}`;
+                document.getElementById('cart-discounts').textContent = `-$${data.cart_totals.descuento_total.toFixed(2)}`;
+                document.getElementById('cart-total').textContent = `$${data.cart_totals.total.toFixed(2)}`;
+            }
+            
+            if (data.action === 'delete') {
+                itemElement.style.opacity = '0';
+                setTimeout(() => {
+                    itemElement.remove();
+                    checkEmptyCart();
+                }, 400);
+            }
+        } else {
+            showFlashMessage(data.message, 'danger');
+            if (data.previous_quantity) {
+                document.getElementById(`quantity-${itemId}`).value = data.previous_quantity;
+                updateQuantity(document.getElementById(`quantity-${itemId}`));
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showFlashMessage('Error al actualizar el carrito', 'danger');
+        itemElement.classList.remove('updating');
+    });
+}
+
+function checkEmptyCart() {
+    const cartItems = document.querySelectorAll('.cart-item');
+    if (cartItems.length === 0) {
+        setTimeout(() => location.reload(), 1000);
+    }
+}
+
+function showFlashMessage(message, type) {
+    let container = document.querySelector('.notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'notification-container';
+        document.body.prepend(container);
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('fade');
+        setTimeout(() => notification.remove(), 150);
+    }, 5000);
+}
+
+let itemIdToDelete = null;
+let deleteUrl = null;
+
+function openDeleteModal(itemId, url) {
+    itemIdToDelete = itemId;
+    deleteUrl = url;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+    deleteModal.show();
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (itemIdToDelete) {
+        const itemElement = document.getElementById(`item-${itemIdToDelete}`);
+        itemElement.classList.add('updating');
+        
+        fetch(deleteUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                itemElement.style.opacity = '0';
+                itemElement.style.transform = 'scale(0.95)';
+                itemElement.style.transition = 'all 0.4s ease';
+                
+                setTimeout(() => {
+                    itemElement.remove();
+                    showFlashMessage('Producto eliminado del carrito', 'success');
+                    checkEmptyCart();
+                    
+                    document.getElementById('cart-subtotal').textContent = `$${data.cart_totals.subtotal_sin_descuento.toFixed(2)}`;
+                    document.getElementById('cart-discounts').textContent = `-$${data.cart_totals.descuento_total.toFixed(2)}`;
+                    document.getElementById('cart-total').textContent = `$${data.cart_totals.total.toFixed(2)}`;
+                }, 400);
+            } else {
+                showFlashMessage('Error al eliminar el producto', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showFlashMessage('Error al eliminar el producto', 'danger');
+        })
+        .finally(() => {
+            const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+            deleteModal.hide();
+            itemElement.classList.remove('updating');
+        });
+    }
+});
+
+document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+        const deleteUrl = this.dataset.deleteUrl;
+        openDeleteModal(itemId, deleteUrl);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,408 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Gestión de Usuarios</h5>
+        <a href="{{ url_for('agregar_usuario') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Agregar Usuario
+        </a>
+    </div>
+
+    <!-- Formulario de búsqueda -->
+    <!-- Formulario de búsqueda -->
+    <div class="card-body">
+        <form id="searchForm" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Buscar</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search" name="search" 
+                           placeholder="Nombre, email o ID" value="{{ request.args.get('search', '') }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="rol" class="form-label">Rol</label>
+                <select class="form-select" id="rol" name="rol">
+                    <option value="">Todos</option>
+                    <option value="admin" {% if request.args.get('rol') == 'admin' %}selected{% endif %}>Administrador</option>
+                    <option value="cliente" {% if request.args.get('rol') == 'cliente' %}selected{% endif %}>Cliente</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="fecha_desde" class="form-label">Desde</label>
+                <input type="date" class="form-control" id="fecha_desde" name="fecha_desde" value="{{ request.args.get('fecha_desde', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label for="fecha_hasta" class="form-label">Hasta</label>
+                <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta" value="{{ request.args.get('fecha_hasta', '') }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-search"></i>
+                </button>
+            <!-- <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                        <i class="fas fa-times"></i>
+            </button> -->
+                <button type="button" id="clearSearch" class="btn btn-outline-secondary btn-sm mx-2">
+                    <i class="fas fa-eraser"></i>Limpiar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th width="15%">Identificación</th>
+                    <th width="20%">Usuario</th>
+                    <th width="20%">Email</th>
+                    <th width="15%">Fecha Registro</th>
+                    <th width="10%">Estado</th>
+                    <th width="20%">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                {% if usuarios %}
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td class="fw-semibold" data-label="ID">#{{ usuario.identificacion }}</td>
+                        <td data-label="Usuario">
+                            <div class="d-flex align-items-center">
+                                <img src="https://ui-avatars.com/api/?name={{ usuario.nombre|urlencode }}&background=random&rounded=true" 
+                                     class="rounded-circle me-3" 
+                                     alt="{{ usuario.nombre }}"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                <div>
+                                    <h6 class="mb-0">{{ usuario.nombre }}</h6>
+                                    <small class="text-muted">
+                                        {% if usuario.es_admin %}
+                                            <span class="badge bg-primary bg-opacity-10 text-primary">Administrador</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary">Cliente</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Email">{{ usuario.email }}</td>
+                        <td data-label="Fecha Registro">{{ usuario.fecha_registro.strftime('%d/%m/%Y') }}</td>
+                        <td data-label="Estado">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input toggle-activo" 
+                                       type="checkbox" 
+                                       id="activo_{{ usuario.id }}" 
+                                       data-user-id="{{ usuario.id }}"
+                                       {% if usuario.activo %}checked{% endif %}>
+                                <label class="form-check-label" for="activo_{{ usuario.id }}">
+                                    {% if usuario.activo %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger">Inactivo</span>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </td>
+                        <td data-label="Acciones">
+                            <div class="d-flex">
+                                <a href="{{ url_for('editar_usuario', usuario_id=usuario.id) }}" 
+                                   class="btn btn-sm btn-outline-primary me-2"
+                                   data-bs-toggle="tooltip"
+                                   title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if usuario.id != session['usuario_id'] %}
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deleteModal"
+                                        data-user-id="{{ usuario.id }}"
+                                        data-user-name="{{ usuario.nombre }}"
+                                        title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="no-results">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted mb-2">No se encontraron usuarios</h5>
+                                <p class="text-muted">No hay usuarios que coincidan con los criterios de búsqueda. Prueba con otros filtros.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p>¿Estás seguro que deseas eliminar al usuario <strong id="userNameToDelete"></strong>?</p>
+                <p class="text-muted small">Esta acción no se puede deshacer y eliminará todos los datos asociados al usuario.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a id="confirmDeleteBtn" href="#" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>Eliminar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Configurar el modal de eliminación
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-user-id');
+            const userName = button.getAttribute('data-user-name');
+            
+            document.getElementById('userNameToDelete').textContent = userName;
+            document.getElementById('confirmDeleteBtn').href = `/admin/usuarios/eliminar/${userId}`;
+        });
+    }
+
+    // Agregar funcionalidad para limpiar búsqueda
+    document.getElementById('clearSearch').addEventListener('click', function() {
+        document.getElementById('search').value = '';
+        document.getElementById('rol').value = '';
+        document.getElementById('fecha_desde').value = '';
+        document.getElementById('fecha_hasta').value = '';
+        document.getElementById('searchForm').submit();
+    });
+    
+    // Toggle para activar/desactivar usuarios
+    document.querySelectorAll('.toggle-activo').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const userId = this.getAttribute('data-user-id');
+            const isActive = this.checked;
+            
+            fetch(`/admin/usuarios/toggle_activo/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    activo: isActive
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const label = this.nextElementSibling;
+                    label.innerHTML = isActive 
+                        ? '<span class="badge bg-success bg-opacity-10 text-success">Activo</span>'
+                        : '<span class="badge bg-danger bg-opacity-10 text-danger">Inactivo</span>';
+                } else {
+                    this.checked = !isActive;
+                    alert(data.message || 'Error al actualizar el estado del usuario');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !isActive;
+                alert('Error al conectar con el servidor');
+            });
+        });
+    });
+
+    // Manejo del formulario de búsqueda con AJAX
+    const searchForm = document.getElementById('searchForm');
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Mostrar spinner de carga
+        const searchBtn = searchForm.querySelector('button[type="submit"]');
+        const originalBtnContent = searchBtn.innerHTML;
+        searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        searchBtn.disabled = true;
+        
+        const formData = new FormData(searchForm);
+        const params = new URLSearchParams(formData).toString();
+        
+        fetch(`/admin/usuarios?${params}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.usuarios && data.usuarios.length > 0) {
+                renderUsersTable(data.usuarios);
+            } else {
+                renderNoResults();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al realizar la búsqueda');
+        })
+        .finally(() => {
+            // Restaurar botón
+            searchBtn.innerHTML = originalBtnContent;
+            searchBtn.disabled = false;
+        });
+    });
+
+    // Función para renderizar la tabla con los resultados
+    function renderUsersTable(usuarios) {
+        const tableBody = document.getElementById('usersTableBody');
+        tableBody.innerHTML = '';
+        
+        usuarios.forEach(usuario => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td class="fw-semibold" data-label="ID">#${usuario.identificacion}</td>
+                <td data-label="Usuario">
+                    <div class="d-flex align-items-center">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nombre)}&background=random&rounded=true" 
+                             class="rounded-circle me-3" 
+                             alt="${usuario.nombre}"
+                             style="width: 40px; height: 40px; object-fit: cover;">
+                        <div>
+                            <h6 class="mb-0">${usuario.nombre}</h6>
+                            <small class="text-muted">
+                                ${usuario.es_admin 
+                                    ? '<span class="badge bg-primary bg-opacity-10 text-primary">Administrador</span>' 
+                                    : '<span class="badge bg-secondary bg-opacity-10 text-secondary">Cliente</span>'}
+                            </small>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Email">${usuario.email}</td>
+                <td data-label="Fecha Registro">${usuario.fecha_registro}</td>
+                <td data-label="Estado">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input toggle-activo" 
+                               type="checkbox" 
+                               id="activo_${usuario.id}" 
+                               data-user-id="${usuario.id}"
+                               ${usuario.activo ? 'checked' : ''}>
+                        <label class="form-check-label" for="activo_${usuario.id}">
+                            ${usuario.activo 
+                                ? '<span class="badge bg-success bg-opacity-10 text-success">Activo</span>' 
+                                : '<span class="badge bg-danger bg-opacity-10 text-danger">Inactivo</span>'}
+                        </label>
+                    </div>
+                </td>
+                <td data-label="Acciones">
+                    <div class="d-flex">
+                        <a href="/admin/usuarios/editar/${usuario.id}" 
+                           class="btn btn-sm btn-outline-primary me-2"
+                           data-bs-toggle="tooltip"
+                           title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        ${usuario.id != {{ session['usuario_id']|tojson }} 
+                            ? `<button class="btn btn-sm btn-outline-danger" 
+                                  data-bs-toggle="modal" 
+                                  data-bs-target="#deleteModal"
+                                  data-user-id="${usuario.id}"
+                                  data-user-name="${usuario.nombre}"
+                                  title="Eliminar">
+                               <i class="fas fa-trash"></i>
+                               </button>`
+                            : ''}
+                    </div>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+        // Inicializar eventos para las nuevas filas
+        initializeTableEvents();
+    }
+
+    // Función para mostrar mensaje de no resultados
+    function renderNoResults() {
+        const tableBody = document.getElementById('usersTableBody');
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-5">
+                    <div class="no-results">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted mb-2">No se encontraron usuarios</h5>
+                        <p class="text-muted">No hay usuarios que coincidan con los criterios de búsqueda. Prueba con otros filtros.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    // Función para inicializar eventos de la tabla
+    function initializeTableEvents() {
+        // Inicializar tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Toggle para activar/desactivar usuarios
+        document.querySelectorAll('.toggle-activo').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const userId = this.getAttribute('data-user-id');
+                const isActive = this.checked;
+                
+                fetch(`/admin/usuarios/toggle_activo/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        activo: isActive
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const label = this.nextElementSibling;
+                        label.innerHTML = isActive 
+                            ? '<span class="badge bg-success bg-opacity-10 text-success">Activo</span>'
+                            : '<span class="badge bg-danger bg-opacity-10 text-danger">Inactivo</span>';
+                    } else {
+                        this.checked = !isActive;
+                        alert(data.message || 'Error al actualizar el estado del usuario');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    this.checked = !isActive;
+                    alert('Error al conectar con el servidor');
+                });
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

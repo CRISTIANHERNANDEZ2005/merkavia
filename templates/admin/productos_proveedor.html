@@ -1,0 +1,190 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Productos del Proveedor: {{ proveedor.nombre }}{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-boxes me-2"></i>Productos del Proveedor: {{ proveedor.nombre }}
+        </h5>
+        <div>
+            <a href="{{ url_for('admin_proveedores') }}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+            <a href="{{ url_for('agregar_producto_proveedor', proveedor_id=proveedor.id) }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Agregar Producto
+            </a>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th width="5%">ID</th>
+                    <th width="25%">Producto</th>
+                    <th width="15%">Marca</th>
+                    <th width="15%">Costo</th>
+                    <th width="10%">Stock</th>
+                    <th width="10%">Estado</th>
+                    <th width="20%">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if productos %}
+                    {% for producto in productos %}
+                    <tr>
+                        <td class="fw-semibold">#{{ producto.id }}</td>
+                        <td>
+                            <h6 class="mb-0">{{ producto.nombre }}</h6>
+                            <small class="text-muted">{{ producto.descripcion|truncate(50) }}</small>
+                        </td>
+                        <td>{{ producto.marca or 'Sin marca' }}</td>
+                        <td>${{ producto.costo|currency }}</td>
+                        <td>{{ producto.stock }}</td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input toggle-activo" 
+                                       type="checkbox" 
+                                       id="activo_{{ producto.id }}" 
+                                       data-producto-id="{{ producto.id }}"
+                                       {% if producto.activo %}checked{% endif %}>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex">
+                                <a href="{{ url_for('editar_producto_proveedor', proveedor_id=proveedor.id, producto_id=producto.id) }}" 
+                                   class="btn btn-sm btn-primary me-2"
+                                   data-bs-toggle="tooltip" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-danger"
+                                    data-bs-toggle="modal" 
+                                        data-bs-target="#deleteModal"
+                                        data-producto-id="{{ producto.id }}"
+                                        data-producto-nombre="{{ producto.nombre }}"
+                                        data-proveedor-id="{{ proveedor.id }}"
+                                        title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% if producto.es_compra %}
+                                <a href="{{ url_for('agregar_producto', producto_proveedor_id=producto.id) }}" 
+                                   class="btn btn-sm btn-success ms-2"
+                                   data-bs-toggle="tooltip" title="Convertir a Producto">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="no-results">
+                                <i class="fas fa-box-open fa-3x"></i>
+                                <h5 class="alert alert-info mb-2">No hay productos registrados</h5>
+                                <p class="badge bg-info bg-opacity-10 text-info">Agrega productos para este proveedor usando el botón de arriba.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p>¿Estás seguro que deseas eliminar el producto <strong id="productoNombreToDelete"></strong>?</p>
+                <p class="text-muted small">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .badge {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(trigger => {
+        new bootstrap.Tooltip(trigger);
+    });
+
+    // Configurar el modal de eliminación
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const productoId = button.getAttribute('data-producto-id');
+            const productoNombre = button.getAttribute('data-producto-nombre');
+            const proveedorId = button.getAttribute('data-proveedor-id');
+            
+            document.getElementById('productoNombreToDelete').textContent = productoNombre;
+            document.getElementById('deleteForm').action = `/admin/proveedores/${proveedorId}/productos/eliminar/${productoId}`;
+        });
+    }
+
+    // Toggle para activar/desactivar productos
+    document.querySelectorAll('.toggle-activo').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const productoId = this.getAttribute('data-producto-id');
+            const isActive = this.checked;
+            
+            fetch(`/admin/productos_proveedor/toggle_activo/${productoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    activo: isActive
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    this.checked = !isActive;
+                    alert(data.message || 'Error al actualizar el estado del producto');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !isActive;
+                alert('Error al conectar con el servidor');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

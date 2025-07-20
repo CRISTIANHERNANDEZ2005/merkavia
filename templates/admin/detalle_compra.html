@@ -1,0 +1,63 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Detalles de la Compra #{{ compra.id }}{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Detalles de la Compra #{{ compra.id }}</h5>
+        <a href="{{ url_for('admin_compras') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Compras
+        </a>
+    </div>
+    
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <p><strong>Proveedor:</strong> {{ compra.proveedor.nombre }}</p>
+                <p><strong>Fecha:</strong> {{ compra.fecha_compra.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>Total:</strong> ${{ compra.total|currency }}</p>
+                <p><strong>Observaciones:</strong> {{ compra.observaciones or 'Sin observaciones' }}</p>
+            </div>
+        </div>
+        
+        <h6 class="mb-3">Productos Comprados</h6>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th width="30%">Producto</th>
+                        <th width="20%">Marca</th>
+                        <th width="15%">Costo Unitario</th>
+                        <th width="15%">Cantidad</th>
+                        <th width="20%">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalle in detalles %}
+                    <tr>
+                        <td data-label="Producto">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-box text-muted"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ detalle.producto_proveedor.nombre }}</h6>
+                                    <small class="d-block text-muted">{{ detalle.producto_proveedor.descripcion|truncate(50) }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Marca">{{ detalle.producto_proveedor.marca or 'Sin marca' }}</td>
+                        <td data-label="Costo Unitario">${{ detalle.costo_unitario|currency }}</td>
+                        <td data-label="Cantidad">{{ detalle.cantidad }}</td>
+                        <td data-label="Subtotal">${{ (detalle.costo_unitario * detalle.cantidad)|currency }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

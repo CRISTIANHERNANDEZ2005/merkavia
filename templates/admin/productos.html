@@ -1,0 +1,419 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Gestión de Productos{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Gestión de Productos</h5>
+        <a href="{{ url_for('agregar_producto') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Agregar Producto
+        </a>
+    </div>
+    
+    <!-- Formulario de búsqueda -->
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin_productos') }}" class="row g-3 mb-4" id="searchForm">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Buscar por nombre</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search_query or '' }}" placeholder="Ingrese el nombre del producto" autocomplete="off">
+                <div id="search-suggestions" style="position:relative;"></div>
+            </div>
+            <div class="col-md-3">
+                <label for="subcategoria_id" class="form-label">Subcategoría</label>
+                <select class="form-select" id="subcategoria_id" name="subcategoria_id">
+                    <option value="">Todas las subcategorías</option>
+                    {% for subcategoria in subcategorias %}
+                        <option value="{{ subcategoria.id }}" {% if subcategoria_id|string == subcategoria.id|string %}selected{% endif %}>{{ subcategoria.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="marca" class="form-label">Marca</label>
+                <select class="form-select" id="marca" name="marca">
+                    <option value="">Todas las marcas</option>
+                    {% for m in marcas %}
+                        <option value="{{ m }}" {% if marca == m %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="descripcion" class="form-label">Descripción</label>
+                <input type="text" class="form-control" id="descripcion" name="descripcion" value="{{ descripcion or '' }}" placeholder="Buscar en descripción" autocomplete="off">
+                <div id="descripcion-suggestions" style="position:relative;"></div>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-filter me-1"></i>Filtrar
+                </button>
+                <button type="button" id="clearSearch" class="btn btn-outline-secondary btn-sm mx-2">
+                    <i class="fas fa-eraser me-1"></i>Limpiar
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th width="5%">ID</th>
+                    <th width="25%">Producto</th>
+                    <th width="15%">Categoría</th>
+                    <th width="10%">Precio</th>
+                    <th width="10%">Existencia</th>
+                    <th width="10%">Estado</th>
+                    <th width="15%">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="productsTableBody">
+                {% if productos %}
+                    {% for producto in productos %}
+                    <tr>
+                        <td class="fw-semibold" data-label="ID">#{{ producto.id }}</td>
+                        <td data-label="Producto">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ producto.imagen or 'https://via.placeholder.com/60' }}" 
+                                     class="rounded me-3" 
+                                     alt="{{ producto.nombre }}"
+                                     style="width: 50px; height: 50px; object-fit: cover;">
+                                <div>
+                                    <h6 class="mb-0">{{ producto.nombre }}</h6>
+                                    <small class="text-muted">{{ producto.marca or 'Sin marca' }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Categoría">{{ producto.categoria.nombre }}</td>
+                        <td data-label="Precio">
+                            {% if producto.descuento > 0 %}
+                                <span class="text-danger">{{ producto.precio_final|currency }}</span>
+                                <small class="text-decoration-line-through text-muted d-block">{{ producto.precio|currency }}</small>
+                            {% else %}
+                                {{ producto.precio|currency }}
+                            {% endif %}
+                        </td>
+                        <td data-label="Stock">
+                            <div class="d-flex align-items-center">
+                                {{ producto.stock }}
+                                <div class="ms-2">
+                                    {% if producto.stock <= producto.stock_minimo %}
+                                        <i class="fas fa-exclamation-circle text-warning" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Stock bajo (Mín: {{ producto.stock_minimo }})"></i>
+                                    {% elif producto.stock >= producto.stock_maximo %}
+                                        <i class="fas fa-check-circle text-success" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Stock máximo alcanzado"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle text-primary" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Stock normal (Mín: {{ producto.stock_minimo }}, Máx: {{ producto.stock_maximo }})"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Estado">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input toggle-activo" 
+                                       type="checkbox" 
+                                       id="activo_{{ producto.id }}" 
+                                       data-product-id="{{ producto.id }}"
+                                       {% if producto.activo %}checked{% endif %}>
+                                <label class="form-check-label" for="activo_{{ producto.id }}">
+                                    {% if producto.activo %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger">Inactivo</span>
+                                    {% endif %}
+                                </label>
+                            </div>
+                            {% if producto.destacado %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning mt-1 d-block">Destacado</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Acciones">
+                            <div class="d-flex">
+                                <!-- Botón de edición -->
+                                <!-- En la columna de acciones, modifica el botón de edición -->
+                                <a href="{{ url_for('editar_producto', producto_id=producto.id) }}" 
+                                   class="btn btn-sm btn-primary me-2"
+                                   data-bs-toggle="tooltip"
+                                   title="{% if producto.proveedor_id %}Edición limitada (solo algunos campos){% else %}Editar producto{% endif %}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <!-- Botón que activa el modal -->
+                                <button class="btn btn-sm btn-danger" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deleteModal"
+                                        data-product-id="{{ producto.id }}"
+                                        data-product-name="{{ producto.nombre }}"
+                                        title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    {% endfor %}
+                {% elif request.args.get('search') or request.args.get('subcategoria_id') %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="no-results">
+                                <i class="fas fa-magnifying-glass fa-3x"></i>
+                                <h5 class="alert alert-danger mb-2">No se encontraron productos</h5>
+                                <p class="badge bg-danger bg-opacity-10 text-danger">No hay productos que coincidan con los criterios de búsqueda. Prueba con otros filtros.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="no-results">
+                                <i class="fas fa-box-open fa-3x"></i>
+                                <h5 class="alert alert-success mb-2">No hay productos registrados</h5>
+                                <p data="badge bg-success bg-successado">¡Comienza agregando un nuevo producto usando el botón de arriba!</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p>¿Estás seguro que deseas eliminar el producto <strong id="productNameToDelete"></strong>?</p>
+                <p class="text-muted small">Esta acción no se puede deshacer y eliminará todos los datos asociados al producto.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="confirmDeleteForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos adicionales para la tabla de productos */
+    .table-hover tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .table th {
+        font-weight: 600;
+        color: var(--dark-color);
+        background-color: rgba(67, 97, 238, 0.03);
+        border-bottom: 2px solid rgba(67, 97, 238, 0.1);
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+    }
+
+    /* Modal de confirmación */
+    .modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border: none;
+    }
+
+    .modal-header {
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+
+    .modal-title.text-danger {
+        color: #dc3545 !important;
+    }
+
+    /* Badges mejorados */
+    .badge {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+
+    /* Botones de acción */
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px !important;
+    }
+
+    /* Estilos para los mensajes de no resultados */
+    .no-results {
+        padding: 2rem;
+        border-radius: 8px;
+        background-color: rgba(0, 0, 0, 0.03);
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .no-results i {
+        opacity: 0.3;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .table-responsive {
+            border-radius: 0;
+        }
+        
+        .table thead {
+            display: none;
+        }
+        
+        .table tr {
+            display: block;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-right: 1rem;
+        }
+        
+        .table td:last-child {
+            border-bottom: none;
+        }
+
+        .no-results {
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(trigger => {
+        new bootstrap.Tooltip(trigger);
+    });
+
+    // Configurar el modal de eliminación
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const productId = button.getAttribute('data-product-id');
+            const productName = button.getAttribute('data-product-name');
+            
+            document.getElementById('productNameToDelete').textContent = productName;
+            document.getElementById('confirmDeleteForm').action = `/admin/productos/eliminar/${productId}`;
+        });
+    }
+
+    // Agregar funcionalidad para limpiar búsqueda
+    document.getElementById('clearSearch').addEventListener('click', function() {
+        // Limpiar el campo de búsqueda
+        document.getElementById('search').value = '';
+        
+        // Limpiar el select de subcategorías (corregido el selector)
+        document.getElementById('subcategoria_id').value = '';
+        
+        // Enviar el formulario
+        document.getElementById('searchForm').submit();
+    });
+
+    // Toggle para activar/desactivar productos
+    document.querySelectorAll('.toggle-activo').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const productId = this.getAttribute('data-product-id');
+            const isActive = this.checked;
+            
+            fetch(`/admin/productos/toggle_activo/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    activo: isActive
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar el badge visualmente
+                    const label = this.nextElementSibling;
+                    label.innerHTML = isActive 
+                        ? '<span class="badge bg-success bg-opacity-10 text-success">Activo</span>'
+                        : '<span class="badge bg-danger bg-opacity-10 text-danger">Inactivo</span>';
+                } else {
+                    // Revertir el cambio si hay error
+                    this.checked = !isActive;
+                    alert(data.message || 'Error al actualizar el estado del producto');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !isActive;
+                alert('Error al conectar con el servidor');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.suggestion-box {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 1000;
+}
+.suggestion-item:hover, .suggestion-item.active {
+    background: #f0f0f0;
+    cursor: pointer;
+}
+</style>
+{% endblock %}

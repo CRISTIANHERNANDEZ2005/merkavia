@@ -1,0 +1,117 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Compras a Proveedores{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Compras a Proveedores</h5>
+        <div>
+            <a href="{{ url_for('agregar_compra') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nueva Compra
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filtros de búsqueda -->
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin_compras') }}" class="row g-3 mb-4" id="searchForm">
+            <div class="col-md-3">
+                <label for="proveedor_id" class="form-label">Proveedor</label>
+                <select class="form-select" id="proveedor_id" name="proveedor_id">
+                    <option value="">Todos los proveedores</option>
+                    {% for proveedor in proveedores %}
+                        <option value="{{ proveedor.id }}" {% if request.args.get('proveedor_id')|string == proveedor.id|string %}selected{% endif %}>
+                            {{ proveedor.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="fecha_desde" class="form-label">Desde</label>
+                <input type="date" class="form-control" id="fecha_desde" name="fecha_desde" value="{{ request.args.get('fecha_desde', '') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="fecha_hasta" class="form-label">Hasta</label>
+                <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta" value="{{ request.args.get('fecha_hasta', '') }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-1"></i>Filtrar
+                </button>
+                <button type="button" id="clearSearch" class="btn btn-outline-secondary ms-2">
+                    <i class="fas fa-eraser me-1"></i>Limpiar
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th width="10%">ID</th>
+                    <th width="20%">Fecha</th>
+                    <th width="20%">Proveedor</th>
+                    <th width="15%">Total</th>
+                    <th width="15%">Productos</th>
+                    <th width="20%">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if compras %}
+                    {% for compra in compras %}
+                    <tr>
+                        <td class="fw-semibold" data-label="ID">#{{ compra.id }}</td>
+                        <td data-label="Fecha">{{ compra.fecha_compra.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                        <td data-label="Proveedor">
+                            <span class="badge bg-primary bg-opacity-10 text-primary">
+                                {{ compra.proveedor.nombre }}
+                            </span>
+                        </td>
+                        <td data-label="Total">${{ compra.total|currency }}</td>
+                        <td data-label="Productos">{{ compra.detalles|sum(attribute='cantidad') }}</td>
+                        <td data-label="Acciones">
+                            <a href="{{ url_for('admin_detalle_compra', compra_id=compra.id) }}" 
+                               class="btn btn-sm btn-primary me-2"
+                               data-bs-toggle="tooltip"
+                               title="Ver Detalles">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="no-results">
+                                <i class="fas fa-boxes fa-3x"></i>
+                                <h5 class="alert alert-success mb-2">No hay compras registradas</h5>
+                                <p class="badge bg-success bg-opacity-10 text-success">¡Realiza tu primera compra usando el botón de arriba!</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(trigger => {
+        new bootstrap.Tooltip(trigger);
+    });
+
+    // Limpiar búsqueda
+    document.getElementById('clearSearch').addEventListener('click', function() {
+        document.getElementById('proveedor_id').value = '';
+        document.getElementById('fecha_desde').value = '';
+        document.getElementById('fecha_hasta').value = '';
+        document.getElementById('searchForm').submit();
+    });
+});
+</script>
+{% endblock %}

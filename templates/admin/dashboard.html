@@ -1,0 +1,241 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 col-lg-3">
+        <div class="stats-card">
+            <div class="card-icon bg-primary bg-opacity-10 text-primary">
+                <i class="fas fa-box"></i>
+            </div>
+            <h3 class="card-value">{{ total_productos }}</h3>
+            <p class="card-title">Productos Totales</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stats-card">
+            <div class="card-icon bg-success bg-opacity-10 text-success">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h3 class="card-value">${{ total_ventas|currency }}</h3>
+            <p class="card-title">Ventas Totales</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stats-card">
+            <div class="card-icon bg-warning bg-opacity-10 text-warning">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="card-value">{{ total_usuarios }}</h3>
+            <p class="card-title">Usuarios Registrados</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stats-card">
+            <div class="card-icon bg-info bg-opacity-10 text-info">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h3 class="card-value">{{ pedidos_pendientes }}</h3>
+            <p class="card-title">Pedidos Pendientes</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="data-card">
+            <div class="card-header">
+                <h5 class="card-title">Ventas</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary period-btn" data-period="month">Mes</button>
+                    <button class="btn btn-sm btn-outline-secondary period-btn" data-period="quarter">Trimestre</button>
+                    <button class="btn btn-sm btn-primary period-btn" data-period="year">Año</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="data-card">
+            <div class="card-header">
+                <h5 class="card-title">Categorías Populares</h5>
+            </div>
+            <div class="chart-container">
+                <canvas id="categoriesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="data-card">
+            <div class="card-header">
+                <h5 class="card-title">Pedidos Recientes</h5>
+                <a href="{{ url_for('admin_pedidos') }}" class="btn btn-primary">Ver Todos</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th># Pedido</th>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos_recientes %}
+                        <tr>
+                            <td>#{{ pedido.id }}</td>
+                            <td>{{ pedido.usuario.nombre }}</td>
+                            <td>{{ pedido.fecha_pedido.strftime('%d %b, %Y') }}</td>
+                            <td>${{ pedido.total|currency }}</td>
+                            <td>
+                                {% if pedido.estado == 'completado' %}
+                                <span class="badge badge-success">Completado</span>
+                                {% elif pedido.estado == 'pendiente' %}
+                                <span class="badge badge-warning">En Proceso</span>
+                                {% else %}
+                                <span class="badge badge-danger">Cancelado</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_detalle_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-primary action-btn">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let salesChartInstance;
+
+    // Initialize sales chart with default yearly data
+    function initializeSalesChart(labels, data) {
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        salesChartInstance = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ventas ($)',
+                    data: data,
+                    borderColor: '#4361ee',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#4361ee',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 6,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { drawBorder: false },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // Update sales chart with new data
+    function updateSalesChart(labels, data) {
+        salesChartInstance.data.labels = labels;
+        salesChartInstance.data.datasets[0].data = data;
+        salesChartInstance.update();
+    }
+
+    // Fetch sales data for a given period
+    function fetchSalesData(period) {
+        fetch(`/admin/sales_data?period=${period}`)
+            .then(response => response.json())
+            .then(data => {
+                updateSalesChart(data.labels, data.data);
+                updateButtonStyles(period);
+            })
+            .catch(error => console.error('Error fetching sales data:', error));
+    }
+
+    // Update button styles based on selected period
+    function updateButtonStyles(selectedPeriod) {
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            if (btn.getAttribute('data-period') === selectedPeriod) {
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-primary');
+            } else {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-secondary');
+            }
+        });
+    }
+
+    // Initialize with yearly data
+    initializeSalesChart(['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'], {{ monthly_sales|tojson }});
+
+    // Add event listeners to period buttons
+    document.querySelectorAll('.period-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const period = this.getAttribute('data-period');
+            fetchSalesData(period);
+        });
+    });
+
+    // Categories chart
+    const categoriesCtx = document.getElementById('categoriesChart').getContext('2d');
+    const categoriesChart = new Chart(categoriesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ categorias_populares.labels|tojson }},
+            datasets: [{
+                data: {{ categorias_populares.data|tojson }},
+                backgroundColor: ['#4361ee', '#4895ef', '#4cc9f0', '#3a0ca3', '#7209b7'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 20 }
+                }
+            }
+        }
+    });
+});
+
+</script>
+{% endblock %}

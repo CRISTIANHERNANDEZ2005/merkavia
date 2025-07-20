@@ -1,0 +1,750 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Ventas Completadas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Ventas Completadas
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse">
+                                <i class="fas fa-filter me-1"></i> Mostrar Filtros
+                            </button>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('ventas_completadas') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-sync-alt me-1"></i> Limpiar
+                            </a>
+                            <button type="button" class="btn btn-success" id="exportarExcel">
+                                <i class="fas fa-file-excel me-1"></i> Exportar Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensaje de datos vacíos -->
+    {% if total_ventas == 0 %}
+    <div class="alert alert-info text-center">
+        No se encontraron ventas completadas para los filtros seleccionados.
+    </div>
+    {% endif %}
+
+    <!-- Resumen Estadístico -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-uppercase mb-2">Total Ventas</h6>
+                            <h2 class="mb-0">{{ total_ventas }}</h2>
+                        </div>
+                        <div class="icon-circle bg-white text-primary">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-uppercase mb-2">Monto Total</h6>
+                            <h2 class="mb-0">${{ "%.2f"|format(monto_total) }}</h2>
+                        </div>
+                        <div class="icon-circle bg-white text-success">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-uppercase mb-2">Promedio por Venta</h6>
+                            <h2 class="mb-0">${{ "%.2f"|format(promedio_venta) }}</h2>
+                        </div>
+                        <div class="icon-circle bg-white text-info">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Ventas por Día</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="ventasPorDiaChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Métodos de Pago</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="metodosPagoChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Colapsables -->
+    <div class="row mb-4 collapse" id="filtrosCollapse">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Filtros de Búsqueda</h5>
+                </div>
+                <div class="card-body">
+                    <form id="filtrosForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" 
+                                   value="{{ fecha_inicio }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" 
+                                   value="{{ fecha_fin }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="cliente_id" class="form-label">Cliente</label>
+                            <select class="form-select" id="cliente_id" name="cliente_id">
+                                <option value="">Todos los clientes</option>
+                                {% for cliente in clientes %}
+                                    <option value="{{ cliente.id }}" {% if cliente_id == cliente.id %}selected{% endif %}>
+                                        {{ cliente.nombre }} ({{ cliente.identificacion }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="metodo_pago" class="form-label">Método de Pago</label>
+                            <select class="form-select" id="metodo_pago" name="metodo_pago">
+                                <option value="">Todos los métodos</option>
+                                {% for metodo in metodos_pago %}
+                                    <option value="{{ metodo }}" {% if metodo_pago == metodo %}selected{% endif %}>
+                                        {{ metodo|capitalize }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="orden" class="form-label">Ordenar por</label>
+                            <select class="form-select" id="orden" name="orden">
+                                <option value="fecha_desc" {% if orden == 'fecha_desc' %}selected{% endif %}>Fecha (más reciente)</option>
+                                <option value="fecha_asc" {% if orden == 'fecha_asc' %}selected{% endif %}>Fecha (más antigua)</option>
+                                <option value="total_desc" {% if orden == 'total_desc' %}selected{% endif %}>Total (mayor a menor)</option>
+                                <option value="total_asc" {% if orden == 'total_asc' %}selected{% endif %}>Total (menor a mayor)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> Aplicar Filtros
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Ventas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Detalle de Ventas</h5>
+                    <span class="badge bg-light text-dark">{{ paginacion.total }} registros</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Productos</th>
+                                    <th>Total</th>
+                                    <th>Método Pago</th>
+                                    <th>Puntos</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for venta in ventas %}
+                                <tr>
+                                    <td>{{ venta.id }}</td>
+                                    <td>{{ venta.fecha_pedido.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        {% if venta.usuario %}
+                                            {{ venta.usuario.nombre }}<br>
+                                            <small class="text-muted">{{ venta.usuario.identificacion }}</small>
+                                        {% else %}
+                                            Cliente general
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% for detalle in venta.detalles %}
+                                            {{ detalle.cantidad }}x {{ detalle.producto.nombre }}<br>
+                                        {% endfor %}
+                                    </td>
+                                    <td>${{ "%.2f"|format(venta.total) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if venta.metodo_pago == 'tarjeta' else 'info' }}">
+                                            {{ venta.metodo_pago|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if venta.puntos_usados > 0 %}
+                                            <span class="badge bg-warning text-dark">
+                                                -{{ venta.puntos_usados }}
+                                            </span>
+                                        {% endif %}
+                                        {% if venta.usuario %}
+                                            <br>
+                                            <small class="text-muted">Total: {{ venta.usuario.puntos }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <a href="{{ url_for('admin_detalle_pedido', pedido_id=venta.id) }}"
+                                                   class="btn btn-sm btn-primary me-1" 
+                                                   title="Ver Detalle">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('descargar_factura', pedido_id=venta.id) }}" 
+                                                   class="btn btn-sm btn-success" 
+                                                   title="Descargar Factura">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Paginación -->
+                    {% if paginacion.pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if paginacion.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('ventas_completadas', page=paginacion.prev_num, 
+                                                                        fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+                                                                        cliente_id=cliente_id, metodo_pago=metodo_pago,
+                                                                        orden=orden) }}">
+                                        &laquo;
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in paginacion.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == paginacion.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('ventas_completadas', page=page_num, 
+                                                                            fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+                                                                            cliente_id=cliente_id, metodo_pago=metodo_pago,
+                                                                            orden=orden) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if paginacion.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('ventas_completadas', page=paginacion.next_num, 
+                                                                        fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+                                                                        cliente_id=cliente_id, metodo_pago=metodo_pago,
+                                                                        orden=orden) }}">
+                                        &raquo;
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<!-- Cargar Chart.js y xlsx sin jQuery -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuración de colores
+    const chartColors = {
+        primary: 'rgba(78, 115, 223, 1)',
+        primaryLight: 'rgba(78, 115, 223, 0.2)',
+        success: 'rgba(28, 200, 138, 1)',
+        successLight: 'rgba(28, 200, 138, 0.2)',
+        info: 'rgba(54, 185, 204, 1)',
+        infoLight: 'rgba(54, 185, 204, 0.2)',
+        warning: 'rgba(246, 194, 62, 1)',
+        warningLight: 'rgba(246, 194, 62, 0.2)',
+        danger: 'rgba(231, 74, 59, 1)',
+        dangerLight: 'rgba(231, 74, 59, 0.2)'
+    };
+
+    // Inicializar gráficos solo una vez al cargar la página
+    initCharts();
+
+    // Configurar event listeners
+    setupEventListeners();
+
+    // Función para inicializar gráficos
+    function initCharts() {
+        // Datos de las gráficas desde Flask (solo se cargan una vez)
+        const ventasPorDiaData = JSON.parse('{{ ventas_por_dia_data | tojson | safe }}');
+        const ventasPorDiaLabels = JSON.parse('{{ ventas_por_dia_labels | tojson | safe }}');
+        const metodosPagoData = JSON.parse('{{ metodos_pago_data | tojson | safe }}');
+        const metodosPagoLabels = JSON.parse('{{ metodos_pago_labels | tojson | safe }}');
+
+        // Gráfica de Ventas por Día
+        const ventasCtx = document.getElementById('ventasPorDiaChart');
+        if (ventasCtx) {
+            new Chart(ventasCtx, {
+                type: 'line',
+                data: {
+                    labels: ventasPorDiaLabels.length ? ventasPorDiaLabels : ['Sin datos'],
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: ventasPorDiaData.length ? ventasPorDiaData : [0],
+                        backgroundColor: chartColors.primaryLight,
+                        borderColor: chartColors.primary,
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.primary,
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: chartColors.primary,
+                        pointHoverBorderColor: '#fff',
+                        pointHitRadius: 10,
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.dataset.label}: $${context.raw.toFixed(2)}`;
+                                }
+                            },
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            padding: 10
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return `$${value}`;
+                                },
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica de Métodos de Pago
+        const metodosCtx = document.getElementById('metodosPagoChart');
+        if (metodosCtx) {
+            new Chart(metodosCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: metodosPagoLabels.length ? metodosPagoLabels : ['Sin datos'],
+                    datasets: [{
+                        data: metodosPagoData.length ? metodosPagoData : [0],
+                        backgroundColor: [
+                            chartColors.primary,
+                            chartColors.success,
+                            chartColors.info,
+                            chartColors.warning,
+                            chartColors.danger
+                        ],
+                        borderWidth: 1,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: {
+                                    size: 14
+                                },
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return ` ${label}: $${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            },
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            padding: 10
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Función para configurar event listeners
+    function setupEventListeners() {
+        // Exportar a Excel
+        document.getElementById('exportarExcel')?.addEventListener('click', exportToExcel);
+        
+        // Formulario de filtros
+        const filterForm = document.getElementById('filtrosForm');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                applyFilters();
+            });
+        }
+    }
+
+    // Función para exportar a Excel
+    function exportToExcel() {
+        try {
+            // Crear un nuevo libro de trabajo
+            const wb = XLSX.utils.book_new();
+            
+            // Convertir la tabla a una hoja de trabajo
+            const table = document.querySelector('.table');
+            const ws = XLSX.utils.table_to_sheet(table);
+            
+            // Añadir la hoja de trabajo al libro
+            XLSX.utils.book_append_sheet(wb, ws, "Ventas Completadas");
+            
+            // Generar nombre de archivo con fecha
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const fileName = `ventas_completadas_${dateStr}.xlsx`;
+            
+            // Descargar el archivo
+            XLSX.writeFile(wb, fileName);
+            
+            // Mostrar notificación de éxito
+            showAlert('Archivo Excel generado con éxito', 'success');
+        } catch (error) {
+            console.error('Error al exportar:', error);
+            showAlert('Error al generar el archivo Excel', 'danger');
+        }
+    }
+
+    // Función para aplicar filtros
+    function applyFilters() {
+        const form = document.getElementById('filtrosForm');
+        if (!form) return;
+        
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        
+        // Agregar parámetros con valor
+        for (const [key, value] of formData.entries()) {
+            if (value) params.append(key, value);
+        }
+        
+        // Realizar solicitud AJAX
+        fetch(`{{ url_for('ventas_completadas') }}?${params.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizar la tabla
+                updateTable(data.ventas);
+                // Actualizar paginación
+                updatePagination(data.paginacion);
+                // Mostrar mensaje si no hay resultados
+                updateEmptyMessage(data.ventas.length === 0);
+            } else {
+                showAlert(data.message || 'Error al aplicar filtros', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error en AJAX:', error);
+            showAlert('Error al aplicar los filtros', 'danger');
+        });
+    }
+
+    // Función para actualizar la tabla
+    function updateTable(ventas) {
+    const tbody = document.querySelector('tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    ventas.forEach(venta => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${venta.id}</td>
+            <td>${new Date(venta.fecha_pedido).toLocaleString('es-ES', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            })}</td>
+            <td>
+                ${venta.usuario.nombre ? (
+                    `${venta.usuario.nombre}<br>
+                    <small class="text-muted">${venta.usuario.identificacion}</small>`
+                ) : 'Cliente general'}
+            </td>
+            <td>
+                ${venta.detalles.map(detalle => 
+                    `${detalle.cantidad}x ${detalle.producto.nombre}`
+                ).join('<br>')}
+            </td>
+            <td>$${parseFloat(venta.total).toFixed(2)}</td>
+            <td>
+                <span class="badge bg-${venta.metodo_pago === 'tarjeta' ? 'success' : 'info'}">
+                    ${venta.metodo_pago.charAt(0).toUpperCase() + venta.metodo_pago.slice(1)}
+                </span>
+            </td>
+            <td>
+                ${venta.puntos_usados > 0 ? 
+                    `<span class="badge bg-warning text-dark">-${venta.puntos_usados}</span>` 
+                    : ''
+                }
+                ${venta.usuario.puntos !== null ? 
+                    `<br><small class="text-muted">Total: ${venta.usuario.puntos}</small>` 
+                    : ''
+                }
+            </td>
+            <td>
+                <div class="d-flex">
+                    <a href="/admin/pedidos/${venta.id}" 
+                       class="btn btn-sm btn-primary me-1" 
+                       title="Ver Detalle">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="/admin/factura/${venta.id}" 
+                       class="btn btn-sm btn-success" 
+                       title="Descargar Factura">
+                        <i class="fas fa-file-pdf"></i>
+                    </a>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+    // Función para actualizar la paginación
+    function updatePagination(paginacion) {
+        const paginationNav = document.querySelector('.pagination');
+        if (!paginationNav) return;
+        
+        paginationNav.innerHTML = '';
+        
+        // Botón anterior
+        if (paginacion.page > 1) {
+            const prevLi = document.createElement('li');
+            prevLi.className = 'page-item';
+            prevLi.innerHTML = `<a class="page-link" href="?page=${paginacion.page - 1}&${getCurrentParams()}">&laquo;</a>`;
+            paginationNav.appendChild(prevLi);
+        }
+        
+        // Páginas
+        const pagesToShow = 5;
+        const startPage = Math.max(1, paginacion.page - Math.floor(pagesToShow / 2));
+        const endPage = Math.min(paginacion.pages, startPage + pagesToShow - 1);
+        
+        if (startPage > 1) {
+            const firstLi = document.createElement('li');
+            firstLi.className = 'page-item';
+            firstLi.innerHTML = `<a class="page-link" href="?page=1&${getCurrentParams()}">1</a>`;
+            paginationNav.appendChild(firstLi);
+            
+            if (startPage > 2) {
+                const dotsLi = document.createElement('li');
+                dotsLi.className = 'page-item disabled';
+                dotsLi.innerHTML = `<span class="page-link">...</span>`;
+                paginationNav.appendChild(dotsLi);
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageLi = document.createElement('li');
+            pageLi.className = `page-item ${i === paginacion.page ? 'active' : ''}`;
+            pageLi.innerHTML = `<a class="page-link" href="?page=${i}&${getCurrentParams()}">${i}</a>`;
+            paginationNav.appendChild(pageLi);
+        }
+        
+        if (endPage < paginacion.pages) {
+            if (endPage < paginacion.pages - 1) {
+                const dotsLi = document.createElement('li');
+                dotsLi.className = 'page-item disabled';
+                dotsLi.innerHTML = `<span class="page-link">...</span>`;
+                paginationNav.appendChild(dotsLi);
+            }
+            
+            const lastLi = document.createElement('li');
+            lastLi.className = 'page-item';
+            lastLi.innerHTML = `<a class="page-link" href="?page=${paginacion.pages}&${getCurrentParams()}">${paginacion.pages}</a>`;
+            paginationNav.appendChild(lastLi);
+        }
+        
+        // Botón siguiente
+        if (paginacion.page < paginacion.pages) {
+            const nextLi = document.createElement('li');
+            nextLi.className = 'page-item';
+            nextLi.innerHTML = `<a class="page-link" href="?page=${paginacion.page + 1}&${getCurrentParams()}">&raquo;</a>`;
+            paginationNav.appendChild(nextLi);
+        }
+    }
+
+    // Función para obtener los parámetros actuales
+    function getCurrentParams() {
+        const form = document.getElementById('filtrosForm');
+        if (!form) return '';
+        
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        
+        for (const [key, value] of formData.entries()) {
+            if (value) params.append(key, value);
+        }
+        
+        return params.toString();
+    }
+
+    // Función para actualizar el mensaje de tabla vacía
+    function updateEmptyMessage(isEmpty) {
+        let emptyMessage = document.querySelector('.alert-info');
+        if (isEmpty && !emptyMessage) {
+            const container = document.querySelector('.container-fluid');
+            emptyMessage = document.createElement('div');
+            emptyMessage.className = 'alert alert-info text-center';
+            emptyMessage.textContent = 'No se encontraron ventas completadas para los filtros seleccionados.';
+            container.insertBefore(emptyMessage, container.querySelector('.row.mb-4'));
+        } else if (!isEmpty && emptyMessage) {
+            emptyMessage.remove();
+        }
+    }
+
+    // Función para mostrar alertas
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.container-fluid');
+        if (container) {
+            // Insertar al principio del contenedor
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Eliminar después de 5 segundos
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 5000);
+        }
+    }
+});
+</script>
+{% endblock %}

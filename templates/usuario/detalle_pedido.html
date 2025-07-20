@@ -1,0 +1,332 @@
+{% extends 'usuario/base.html' %}
+
+{% block title %}Detalle del Pedido - Tienda Online{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Encabezado mejorado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold text-primary">Detalle del Pedido <span class="text-muted">#{{ pedido.id }}</span></h1>
+        <a href="{{ url_for('descargar_factura', pedido_id=pedido.id) }}" class="btn btn-primary btn-lg px-4">
+            <i class="fas fa-file-pdf me-2"></i>Descargar Factura
+        </a>
+    </div>
+    
+    <!-- Sección de Información del Pedido - Mejorada visualmente -->
+    <div class="order-details mb-5">
+        <h2 class="mb-4 pb-2 border-bottom border-2 border-primary d-inline-block">Información del Pedido</h2>
+        
+        <div class="row g-4">
+            <!-- Tarjeta de Fecha - Rediseñada -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+                    <div class="card-header bg-primary text-white py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-alt fa-2x me-3"></i>
+                            <h5 class="mb-0">Fecha</h5>
+                        </div>
+                    </div>
+                    <div class="card-body bg-light">
+                        <p class="display-6 fw-bold text-center text-primary mb-0">
+                            {{ pedido.fecha_pedido.strftime('%d/%m/%Y') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tarjeta de Total - Rediseñada -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+                    <div class="card-header bg-success text-white py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-dollar-sign fa-2x me-3"></i>
+                            <h5 class="mb-0">Total</h5>
+                        </div>
+                    </div>
+                    <div class="card-body bg-light">
+                        <p class="display-6 fw-bold text-center text-success mb-0">
+                            ${{ pedido.total|round(2) }}
+                        </p>
+                        {% if descuento_total > 0 %}
+                        <p class="text-center text-danger mb-0 small">
+                            Ahorro: ${{ (descuento_total + pedido.puntos_usados)|round(2) }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tarjeta de Método de Pago - Rediseñada -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+                    <div class="card-header bg-info text-white py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="{{ 'fa-credit-card' if pedido.metodo_pago == 'tarjeta' else 'fa-money-bill-wave' }} fas fa-2x me-3"></i>
+                            <h5 class="mb-0">Pago</h5>
+                        </div>
+                    </div>
+                    <div class="card-body bg-light">
+                        <p class="display-6 fw-bold text-center text-info">
+                            {{ 'Tarjeta' if pedido.metodo_pago == 'tarjeta' else 'Contraentrega' }}
+                        </p>
+                        <p class="text-center text-muted mb-0 small">
+                            {{ 'Pagado' if pedido.metodo_pago == 'tarjeta' else 'Por pagar' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tarjeta de Dirección - Rediseñada -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+                    <div class="card-header bg-warning text-dark py-3 position-relative">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-map-marker-alt fa-2x me-3"></i>
+                            <h5 class="mb-0">Envío</h5>
+                        </div>
+                        <button type="button" 
+                                class="btn btn-light position-absolute top-0 end-0 m-2" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#addressModal">
+                            <i class="fas fa-edit text-warning me-1"></i>
+                            <span class="text-warning">Actualizar</span>
+                        </button>
+                    </div>
+                    <div class="card-body bg-light">
+                        <div>
+                            <p class="fw-bold mb-1"><i class="fas fa-user me-2"></i>{{ pedido.nombre }}</p>
+                            <p class="mb-1 small"><i class="fas fa-home me-2"></i>{{ pedido.direccion }}</p>
+                            <p class="mb-1 small"><i class="fas fa-city me-2"></i>{{ pedido.ciudad }}, {{ pedido.codigo_postal }}</p>
+                            <p class="mb-0 small"><i class="fas fa-phone me-2"></i>{{ pedido.telefono }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabla de Productos - Mejorada visualmente -->
+    <div class="products-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Productos del Pedido</h2>
+            <span class="badge bg-primary rounded-pill px-3 py-2">
+                {{ detalles|length }} producto{{ 's' if detalles|length > 1 else '' }}
+            </span>
+        </div>
+        
+        <div class="table-responsive rounded-4 shadow-sm">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Descuento</th>
+                        <th class="text-end pe-4">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalle in detalles %}
+                    <tr class="border-top">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ detalle.producto.imagen }}" alt="{{ detalle.producto.nombre }}" 
+                                     class="img-fluid rounded-3 me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                <div>
+                                    <p class="fw-bold mb-0">{{ detalle.producto.nombre }}</p>
+                                    <p class="text-muted mb-0 small">{{ detalle.producto.marca }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary rounded-pill px-3 py-2">
+                                {{ detalle.cantidad }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="fw-bold">${{ detalle.precio|round(2) }}</span>
+                            {% if detalle.descuento_aplicado > 0 %}
+                            <p class="text-muted small mb-0"><s>${{ (detalle.precio / (1 - detalle.descuento_aplicado/100))|round(2) }}</s></p>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if detalle.descuento_aplicado > 0 %}
+                            <span class="badge bg-success rounded-pill px-3 py-2">
+                                {{ detalle.descuento_aplicado }}%
+                            </span>
+                            {% else %}
+                            <span class="text-muted small">Ninguno</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <span class="fw-bold">${{ (detalle.cantidad * detalle.precio)|round(2) }}</span>
+                            {% if detalle.descuento_aplicado > 0 %}
+                            <p class="text-muted small mb-0"><s>${{ (detalle.cantidad * (detalle.precio / (1 - detalle.descuento_aplicado/100)))|round(2) }}</s></p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="4" class="ps-4 fw-bold">Subtotal (sin descuentos)</td>
+                        <td class="text-end pe-4 fw-bold">${{ subtotal_sin_descuento|round(2) }}</td>
+                    </tr>
+                    {% if descuento_total > 0 %}
+                    <tr>
+                        <td colspan="4" class="ps-4 fw-bold" style="color: red;">Descuento Total</td>
+                        <td class="text-end pe-4 fw-bold" style="color: red;">-${{ descuento_total|round(2) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if pedido.puntos_usados > 0 %}
+                    <tr>
+                        <td colspan="4" class="ps-4 fw-bold" style="color: #0dcaf0;">
+                            <i class="fas fa-coins me-2"></i>Descuento por Puntos ({{ pedido.puntos_usados }} pts)
+                        </td>
+                        <td class="text-end pe-4 fw-bold" style="color: #0dcaf0;">
+                            -${{ "{:.2f}".format(pedido.puntos_usados / 10) }}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td colspan="4" class="ps-4 fw-bold">Total Pagado</td>
+                        <td class="text-end pe-4 fw-bold fs-5 text-primary">${{ pedido.total|round(2) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Botones de acción - Mejorados -->
+    <div class="d-flex justify-content-between flex-wrap gap-3 mt-5 pt-4 border-top">
+        <a href="{{ url_for('mis_pedidos') }}" class="btn btn-lg btn-outline-primary px-4">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Mis Pedidos
+        </a>
+        <div>
+            <a href="{{ url_for('index') }}" class="btn btn-lg btn-outline-secondary px-4 me-2">
+                <i class="fas fa-home me-2"></i>Ir al Inicio
+            </a>
+            <a href="{{ url_for('todos_productos') }}" class="btn btn-lg btn-primary px-4">
+                <i class="fas fa-shopping-bag me-2"></i>Seguir Comprando
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Dirección - Mejorado -->
+<div class="modal fade mt-5" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addressModalLabel">Actualizar Dirección de Envío</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('actualizar_direccion', pedido_id=pedido.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label fw-bold">Nombre Completo</label>
+                            <input type="text" class="form-control form-control-lg" id="nombre" name="nombre" 
+                                   value="{{ pedido.nombre }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="telefono" class="form-label fw-bold">Teléfono</label>
+                            <input type="text" class="form-control form-control-lg" id="telefono" name="telefono" 
+                                   value="{{ pedido.telefono }}" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="direccion" class="form-label fw-bold">Dirección</label>
+                            <input type="text" class="form-control form-control-lg" id="direccion" name="direccion" 
+                                   value="{{ pedido.direccion }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="ciudad" class="form-label fw-bold">Ciudad</label>
+                            <input type="text" class="form-control form-control-lg" id="ciudad" name="ciudad" 
+                                   value="{{ pedido.ciudad }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="codigo_postal" class="form-label fw-bold">Código Postal</label>
+                            <input type="text" class="form-control form-control-lg" id="codigo_postal" name="codigo_postal" 
+                                   value="{{ pedido.codigo_postal }}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-lg btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-lg btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos personalizados para mejorar el diseño */
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+        font-weight: 600;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .badge {
+        font-weight: 500;
+    }
+    
+    .border-primary-custom {
+        border-color: #0d6efd !important;
+    }
+    
+    .order-details h2 {
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    .order-details h2::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(90deg, #0d6efd, #6f42c1);
+        border-radius: 2px;
+    }
+    
+    .products-section {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table thead th {
+        background-color: #f1f3f5;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+    
+    .table tfoot td {
+        border-top: 2px solid #dee2e6;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,286 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Registrar Nueva Compra{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Registrar Nueva Compra</h2>
+    
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form id="form-compra" method="POST" action="{{ url_for('agregar_compra') }}">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="proveedor_id" class="form-label">Proveedor *</label>
+                <select id="proveedor_id" name="proveedor_id" class="form-select" required>
+                    <option value="">Seleccione un proveedor</option>
+                    {% for proveedor in proveedores %}
+                        <option value="{{ proveedor.id }}">{{ proveedor.nombre }} ({{ proveedor.tipo }})</option>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback">Por favor seleccione un proveedor</div>
+            </div>
+            <div class="col-md-6">
+                <label for="categoria_id" class="form-label">Categoría Destino *</label>
+                <select id="categoria_id" name="categoria_id" class="form-select" required>
+                    <option value="">Seleccione una categoría</option>
+                    {% for categoria in categorias %}
+                        <optgroup label="{{ categoria.nombre }}">
+                            {% for subcategoria in categoria.subcategorias %}
+                                <option value="{{ subcategoria.id }}">{{ subcategoria.nombre }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback">Por favor seleccione una categoría</div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                Productos de la Compra
+                <button type="button" class="btn btn-primary btn-sm float-end" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
+                    Agregar Producto
+                </button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped" id="tabla-productos">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Costo Unitario</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-productos">
+                        <!-- Productos se agregarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="observaciones" class="form-label">Observaciones</label>
+                <textarea id="observaciones" name="observaciones" class="form-control" rows="4"></textarea>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Resumen de Compra</div>
+                    <div class="card-body">
+                        <p>Subtotal: <span id="subtotal">$0.00</span></p>
+                        <p>IVA (19%): <span id="iva">$0.00</span></p>
+                        <p><strong>Total:</strong> <span id="total">$0.00</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <a href="{{ url_for('admin_compras') }}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Registrar Compra</button>
+        </div>
+    </form>
+
+    <!-- Modal para buscar productos -->
+    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-labelledby="modalBuscarProductoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalBuscarProductoLabel">Buscar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <input type="text" id="buscar-producto" class="form-control" placeholder="Buscar producto...">
+                        <button class="btn btn-outline-secondary" type="button" id="btn-buscar">Buscar</button>
+                    </div>
+                    <table class="table table-striped" id="tabla-busqueda-productos">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Marca</th>
+                                <th>Costo</th>
+                                <th>Stock</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultados-busqueda">
+                            <!-- Resultados se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formCompra = document.getElementById('form-compra');
+    const proveedorSelect = document.getElementById('proveedor_id');
+    const tablaProductos = document.getElementById('lista-productos');
+    const subtotalSpan = document.getElementById('subtotal');
+    const ivaSpan = document.getElementById('iva');
+    const totalSpan = document.getElementById('total');
+    const buscarProductoInput = document.getElementById('buscar-producto');
+    const resultadosBusqueda = document.getElementById('resultados-busqueda');
+    const IVA_RATE = 0.19;
+
+    let productosAgregados = [];
+
+    // Validar formulario antes de enviar
+    formCompra.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (productosAgregados.length === 0) {
+            alert('Debe agregar al menos un producto');
+            return;
+        }
+
+        // Agregar inputs ocultos para los productos
+        const formData = new FormData(formCompra);
+        productosAgregados.forEach((producto, index) => {
+            formData.append('productos[]', producto.id);
+            formData.append('cantidades[]', producto.cantidad);
+            formData.append('costos_unitarios[]', producto.costo);
+        });
+
+        // Enviar formulario mediante AJAX
+        fetch(formCompra.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect || '/admin/compras';
+            } else {
+                alert(data.message || 'Error al registrar la compra');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al enviar la compra');
+        });
+    });
+
+    // Actualizar tabla de productos y resumen
+    function actualizarTablaProductos() {
+        tablaProductos.innerHTML = '';
+        let subtotal = 0;
+
+        productosAgregados.forEach((producto, index) => {
+            const subtotalProducto = producto.cantidad * producto.costo;
+            subtotal += subtotalProducto;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${producto.nombre}</td>
+                <td>$${producto.costo.toFixed(2)}</td>
+                <td>${producto.cantidad}</td>
+                <td>$${subtotalProducto.toFixed(2)}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="eliminarProducto(${index})">
+                        Eliminar
+                    </button>
+                </td>
+            `;
+            tablaProductos.appendChild(row);
+        });
+
+        const iva = subtotal * IVA_RATE;
+        const total = subtotal + iva;
+
+        subtotalSpan.textContent = `$${subtotal.toFixed(2)}`;
+        ivaSpan.textContent = `$${iva.toFixed(2)}`;
+        totalSpan.textContent = `$${total.toFixed(2)}`;
+    }
+
+    // Eliminar producto de la lista
+    window.eliminarProducto = function(index) {
+        productosAgregados.splice(index, 1);
+        actualizarTablaProductos();
+    };
+
+    // Cargar productos en el modal
+    proveedorSelect.addEventListener('change', function() {
+        const proveedorId = this.value;
+        if (proveedorId) {
+            fetch(`/admin/compras/buscar_productos/${proveedorId}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultadosBusqueda.innerHTML = '';
+                    if (data.error) {
+                        resultadosBusqueda.innerHTML = `<tr><td colspan="5">${data.error}</td></tr>`;
+                        return;
+                    }
+
+                    data.forEach(producto => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${producto.nombre}</td>
+                            <td>${producto.marca}</td>
+                            <td>$${producto.costo.toFixed(2)}</td>
+                            <td>${producto.stock}</td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="agregarProducto(${producto.id}, '${producto.nombre}', ${producto.costo}, ${producto.stock})">
+                                    Agregar
+                                </button>
+                            </td>
+                        `;
+                        resultadosBusqueda.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    resultadosBusqueda.innerHTML = '<tr><td colspan="5">Error al cargar productos</td></tr>';
+                });
+        } else {
+            resultadosBusqueda.innerHTML = '<tr><td colspan="5">Seleccione un proveedor primero</td></tr>';
+        }
+    });
+
+    // Agregar producto desde el modal
+    window.agregarProducto = function(id, nombre, costo, stock) {
+        const cantidadInput = prompt(`Ingrese la cantidad para ${nombre} (Stock disponible: ${stock})`, '1');
+        const cantidad = parseInt(cantidadInput);
+
+        if (isNaN(cantidad) || cantidad <= 0) {
+            alert('Cantidad inválida');
+            return;
+        }
+
+        if (cantidad > stock) {
+            alert(`No puede agregar más de ${stock} unidades`);
+            return;
+        }
+
+        productosAgregados.push({
+            id: id,
+            nombre: nombre,
+            costo: costo,
+            cantidad: cantidad
+        });
+
+        actualizarTablaProductos();
+        bootstrap.Modal.getInstance(document.getElementById('modalBuscarProducto')).hide();
+    };
+});
+</script>
+{% endblock %}

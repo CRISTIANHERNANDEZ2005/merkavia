@@ -1,0 +1,946 @@
+{% extends 'usuario/base.html' %}
+
+{% block title %}Inicio - Tienda Online{% endblock %}
+
+{% block content %}
+<!-- Hero Section Mejorada -->
+<section class="hero py-5 position-relative overflow-hidden" data-aos="fade-in">
+    <div class="container position-relative z-index-1">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
+                <!-- Badge de oferta especial con efecto brillo -->
+                <div class="special-offer-badge bg-gradient-primary p-3 rounded-4 d-inline-block mb-4 animate__animated animate__pulse animate__infinite">
+                    <span class="badge bg-white text-primary fw-bold fs-6">OFERTA ESPECIAL</span>
+                </div>
+                
+                <!-- Título con efecto gradiente -->
+                <h1 class="display-4 fw-bold mb-3 hero-title">
+                    Bienvenido a <span class="text-gradient">Merkavia</span>
+                </h1>
+                
+                <!-- Descripción con icono -->
+                <p class="lead text-white mb-4 position-relative ps-4">
+                    <i class="fas fa-star text-warning position-absolute start-0 top-0"></i>
+                    Descubre los mejores productos a precios increíbles con envío rápido y seguro
+                </p>
+                
+                <!-- Botones con efectos hover -->
+                <div class="d-flex flex-wrap gap-3 position-relative" style="z-index: 10;">
+                    <a href="{{ url_for('todas_ofertas') }}" 
+                       class="btn btn-warning btn-lg px-4 py-3 rounded-pill fw-bold shadow hero-btn position-relative"
+                       style="transition: all 0.3s ease; cursor: pointer;">
+                        <i class="fas fa-tags me-2"></i>Ver Ofertas
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            HOT!
+                        </span>
+                    </a>
+                    
+                    <a href="{{ url_for('todas_categorias') }}" 
+                       class="btn btn-outline-light btn-lg px-4 py-3 rounded-pill fw-bold hero-btn"
+                       style="transition: all 0.3s ease; cursor: pointer;">
+                        <i class="fas fa-list me-2"></i>Explorar Categorías
+                    </a>
+                </div>
+
+                
+                <!-- Beneficios con iconos animados -->
+                <div class="d-flex flex-wrap gap-4 mt-5">
+                    <div class="d-flex align-items-center benefit-item">
+                        <div class="icon-wrapper bg-white text-primary rounded-circle p-3 me-3">
+                            <i class="fas fa-shipping-fast fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-white mb-0">Envío Gratis</h5>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center benefit-item">
+                        <div class="icon-wrapper bg-white text-primary rounded-circle p-3 me-3">
+                            <i class="fas fa-shield-alt fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-white mb-0">Compra Segura</h5>
+                            <p class="text-light mb-0">Protegemos tus datos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 text-center" data-aos="fade-left">
+                <div class="position-relative hero-image-container">
+                    <!-- Imagen principal con efecto flotante -->
+                    <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Tienda Online" class="img-fluid rounded-4 shadow-lg floating">
+                    
+                    <!-- Etiqueta de descuento con animación -->
+                    <div class="discount-badge position-absolute top-0 start-0 bg-warning text-dark fw-bold px-3 py-2 rounded-end animate__animated animate__tada animate__infinite">
+                        <span class="d-block">Hasta 50%</span>
+                        <span class="d-block">DE DESCUENTO</span>
+                    </div>
+                    
+                    <!-- Elemento decorativo de fondo -->
+                    <div class="decorative-element position-absolute bottom-0 end-0">
+                        <div class="circle bg-primary bg-opacity-10"></div>
+                        <div class="circle bg-warning bg-opacity-10"></div>
+                        <div class="circle bg-primary bg-opacity-10"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Formas decorativas de fondo -->
+    <div class="position-absolute top-0 end-0 w-50 h-100 bg-primary bg-opacity-10 rounded-start-5"></div>
+    <div class="position-absolute bottom-0 start-0 w-25 h-50 bg-warning bg-opacity-10 rounded-end-5"></div>
+    
+    <!-- Partículas decorativas -->
+    <div class="particles">
+        <div class="particle particle-1"></div>
+        <div class="particle particle-2"></div>
+        <div class="particle particle-3"></div>
+        <div class="particle particle-4"></div>
+        <div class="particle particle-5"></div>
+    </div>
+</section>
+
+
+<!-- Categorías Destacadas -->
+<section id="categorias" class="categorias py-5" data-aos="fade-up">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Explora Nuestras Categorías</h2>
+            <div class="d-flex">
+                <a href="{{ url_for('todas_categorias') }}" class="btn btn-outline-primary me-2">Ver todas</a>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary categorias-prev"><i class="fas fa-arrow-left"></i></button>
+                    <button class="btn btn-outline-secondary categorias-next"><i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-4 categorias-container">
+            {% for categoria in categorias %}
+            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6" data-aos="zoom-in" data-aos-delay="{{ loop.index * 50 }}">
+                <a href="{{ url_for('mostrar_categoria', categoria_id=categoria.id) }}" class="card h-100 border-0 shadow-sm text-decoration-none text-reset hover-scale">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-flex align-items-center justify-content-center mb-3">
+                            <i class="fas fa-{{ categoria.icono|default('shopping-bag') }} fa-2x text-primary"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ categoria.nombre }}</h5>
+                        <p class="card-text text-muted small">{{ categoria.productos_count }} productos</p>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Ofertas Especiales -->
+<section class="ofertas py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Ofertas Especiales</h2>
+            <div class="d-flex">
+                <a href="{{ url_for('todas_ofertas') }}" class="btn btn-outline-primary me-2">Ver todas</a>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary ofertas-prev"><i class="fas fa-arrow-left"></i></button>
+                    <button class="btn btn-outline-secondary ofertas-next"><i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 ofertas-container">
+            {% for producto in productos %}
+            <div class="col" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                <div class="card h-100 border-0 shadow-sm transition-all hover-scale">
+                    {% if producto.descuento > 0 %}
+                    <div class="badge bg-danger position-absolute top-0 start-0 m-2 px-2 py-1">
+                        -{{ producto.descuento }}%
+                    </div>
+                    {% endif %}
+                    
+                    <div class="product-image-container">
+                        <img src="{{ producto.imagen }}" class="card-img-top p-3" alt="{{ producto.nombre }}" loading="lazy">
+                    </div>
+                    
+                    <div class="card-body pt-0">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h3 class="h5 card-title mb-0">{{ producto.nombre }}</h3>
+                            {% if producto.marca %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary small">{{ producto.marca }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="card-text text-muted small mb-3">{{ producto.descripcion|truncate(80) }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            {% if producto.descuento > 0 %}
+                            <div>
+                                <span class="h5 fw-bold text-primary">${{ (producto.precio * (1 - producto.descuento / 100))|round(2) }}</span>
+                                <span class="text-muted text-decoration-line-through small ms-2">${{ producto.precio|round(2) }}</span>
+                            </div>
+                            {% else %}
+                            <span class="h5 fw-bold text-primary">${{ producto.precio|round(2) }}</span>
+                            {% endif %}
+                            
+                            <span class="badge bg-success bg-opacity-10 text-success small">
+                                <i class="fas fa-check-circle me-1"></i> En stock
+                            </span>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="card-footer bg-transparent border-0 pt-0">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('detalle_producto', producto_id=producto.id) }}" class="btn btn-outline-primary">
+                                <i class="far fa-eye me-2"></i>Ver detalles
+                            </a>
+                            <form action="{{ url_for('agregar_carrito', producto_id=producto.id) }}" method="POST">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-cart-plus me-2"></i>Añadir al carrito
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Productos Destacados -->
+<section id="destacados" class="productos py-5" data-aos="fade-up">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Productos Destacados</h2>
+            <div class="d-flex">
+                <div class="d-flex">
+                <a href="{{ url_for('todos_destacados') }}" class="btn btn-outline-primary me-2">Ver todas</a>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary destacados-prev"><i class="fas fa-arrow-left"></i></button>
+                    <button class="btn btn-outline-secondary destacados-next"><i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+            </div>
+        </div>
+        
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 destacados-container">
+            {% for producto in productos %}
+            <div class="col" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
+                <div class="card h-100 border-0 shadow-sm transition-all hover-scale">
+                    {% if producto.destacado %}
+                    <div class="badge bg-warning text-dark position-absolute top-0 end-0 m-2 px-2 py-1">
+                        Destacado
+                    </div>
+                    {% endif %}
+                    
+                    <div class="product-image-container">
+                        <img src="{{ producto.imagen }}" class="card-img-top p-3" alt="{{ producto.nombre }}" loading="lazy">
+                    </div>
+                    
+                    <div class="card-body pt-0">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h3 class="h5 card-title mb-0">{{ producto.nombre }}</h3>
+                            {% if producto.marca %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary small">{{ producto.marca }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="card-text text-muted small mb-3">{{ producto.descripcion|truncate(80) }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            {% if producto.descuento > 0 %}
+                            <div>
+                                <span class="h5 fw-bold text-primary">${{ (producto.precio * (1 - producto.descuento / 100))|round(2) }}</span>
+                                <span class="text-muted text-decoration-line-through small ms-2">${{ producto.precio|round(2) }}</span>
+                            </div>
+                            {% else %}
+                            <span class="h5 fw-bold text-primary">${{ producto.precio|round(2) }}</span>
+                            {% endif %}
+                            
+                            <span class="badge bg-success bg-opacity-10 text-success small">
+                                <i class="fas fa-check-circle me-1"></i> En stock
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent border-0 pt-0">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('detalle_producto', producto_id=producto.id) }}" class="btn btn-outline-primary">
+                                <i class="far fa-eye me-2"></i>Ver detalles
+                            </a>
+                            <form action="{{ url_for('agregar_carrito', producto_id=producto.id) }}" method="POST">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-cart-plus me-2"></i>Añadir al carrito
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="{{ url_for('todos_productos') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow">
+                <i class="fas fa-boxes me-2"></i>Ver todos los productos
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">Lo que dicen nuestros <span class="text-primary">clientes</span></h2>
+            <p class="lead text-muted">Descubre la experiencia de quienes ya compraron con nosotros</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm testimonial-card">
+                    <div class="card-body p-4">
+                        <div class="rating mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="fst-italic mb-4">"La calidad de los productos superó mis expectativas. El envío fue rápido y el empaque muy seguro. ¡Volveré a comprar sin duda!"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                AM
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Ana Martínez</h5>
+                                <small class="text-muted">Compradora frecuente</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm testimonial-card">
+                    <div class="card-body p-4">
+                        <div class="rating mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                        </div>
+                        <p class="fst-italic mb-4">"Excelente servicio al cliente. Tuve un problema con mi pedido y lo resolvieron en menos de 24 horas. Muy profesionales y atentos."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                CR
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Carlos Rodríguez</h5>
+                                <small class="text-muted">Primera compra</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm testimonial-card">
+                    <div class="card-body p-4">
+                        <div class="rating mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="fst-italic mb-4">"Los precios son muy competitivos y la variedad de productos es amplia. Encontré exactamente lo que buscaba y con una calidad excepcional."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                MG
+                            </div>
+                            <div>
+                                <h5 class="mb-0">María González</h5>
+                                <small class="text-muted">Compra mensual</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="benefits py-5 position-relative">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <div class="card bg-primary text-white border-0 shadow-lg h-100">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="icon-wrapper bg-white text-primary rounded-circle p-3 d-inline-flex align-items-center justify-content-center mb-4">
+                            <i class="fas fa-truck fa-2x"></i>
+                        </div>
+                        <h3 class="card-title fw-bold mb-3">Envío Rápido y Seguro</h3>
+                        <p class="card-text mb-4">Entrega en 24-48 horas en las principales ciudades con seguimiento en tiempo real y empaque reforzado para máxima protección.</p>
+                        <a href="#" class="btn btn-light text-primary fw-bold">Más información <i class="fas fa-arrow-right ms-2"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <div class="card bg-gradient-warning text-dark border-0 shadow-lg h-100">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="icon-wrapper bg-white text-warning rounded-circle p-3 d-inline-flex align-items-center justify-content-center mb-4">
+                            <i class="fas fa-shield-alt fa-2x"></i>
+                        </div>
+                        <h3 class="card-title fw-bold mb-3">Compra 100% Protegida</h3>
+                        <p class="card-text mb-4">Tu información está segura con encriptación SSL y garantía de devolución de 30 días si no estás satisfecho con tu compra.</p>
+                        <a href="#" class="btn btn-dark fw-bold">Nuestra garantía <i class="fas fa-arrow-right ms-2"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card bg-dark text-white border-0 shadow-lg h-100">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="icon-wrapper bg-white text-dark rounded-circle p-3 d-inline-flex align-items-center justify-content-center mb-4">
+                            <i class="fas fa-headset fa-2x"></i>
+                        </div>
+                        <h3 class="card-title fw-bold mb-3">Soporte Premium 24/7</h3>
+                        <p class="card-text mb-4">Nuestro equipo de expertos está disponible en todo momento para resolver tus dudas y brindarte la mejor experiencia de compra.</p>
+                        <a href="#" class="btn btn-outline-light fw-bold">Contactar soporte <i class="fas fa-arrow-right ms-2"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<style>
+    /* Estilos personalizados para la página de inicio */
+.hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('{{ url_for("static", filename="img/logo1.jpg") }}') center center / cover no-repeat;
+    opacity: 0.15;
+    z-index: 0;
+}
+
+.hero-title {
+    background: linear-gradient(to right, #ffffff, #4facfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hover-scale {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-scale:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.product-image-container {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+}
+
+.product-image-container img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.card {
+    border-radius: 16px !important;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.text-gradient {
+    background: linear-gradient(to right, #ff9a9e, #fad0c4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+.special-offer-badge {
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.5);
+}
+
+.special-offer-badge::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 20px;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(25deg);
+    transition: all 0.6s;
+}
+
+.special-offer-badge:hover::after {
+    left: 120%;
+}
+
+.hero-btn {
+    transition: all 0.3s ease;
+    transform: translateY(0);
+}
+
+.hero-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.benefit-item {
+    transition: transform 0.3s ease;
+}
+
+.benefit-item:hover {
+    transform: translateX(10px);
+}
+
+.icon-wrapper {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.benefit-item:hover .icon-wrapper {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.hero-image-container {
+    perspective: 1000px;
+}
+
+.floating {
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
+.discount-badge {
+    animation-delay: 1s;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+}
+
+.decorative-element {
+    z-index: -1;
+    width: 200px;
+    height: 200px;
+}
+
+.decorative-element .circle {
+    position: absolute;
+    border-radius: 50%;
+}
+
+.decorative-element .circle:nth-child(1) {
+    width: 120px;
+    height: 120px;
+    top: 0;
+    right: 0;
+}
+
+.decorative-element .circle:nth-child(2) {
+    width: 80px;
+    height: 80px;
+    top: 40px;
+    right: 100px;
+}
+
+.decorative-element .circle:nth-child(3) {
+    width: 60px;
+    height: 60px;
+    top: 100px;
+    right: 40px;
+}
+
+.particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
+}
+
+.particle-1 {
+    width: 15px;
+    height: 15px;
+    top: 20%;
+    left: 10%;
+    animation: particleMove 10s linear infinite;
+}
+
+.particle-2 {
+    width: 10px;
+    height: 10px;
+    top: 60%;
+    left: 80%;
+    animation: particleMove 12s linear infinite;
+}
+
+.particle-3 {
+    width: 8px;
+    height: 8px;
+    top: 40%;
+    left: 30%;
+    animation: particleMove 14s linear infinite;
+}
+
+.particle-4 {
+    width: 12px;
+    height: 12px;
+    top: 70%;
+    left: 50%;
+    animation: particleMove 11s linear infinite;
+}
+
+.particle-5 {
+    width: 6px;
+    height: 6px;
+    top: 30%;
+    left: 70%;
+    animation: particleMove 13s linear infinite;
+}
+
+@keyframes particleMove {
+    0% { transform: translateY(0) translateX(0); }
+    25% { transform: translateY(-20px) translateX(15px); }
+    50% { transform: translateY(0) translateX(30px); }
+    75% { transform: translateY(20px) translateX(15px); }
+    100% { transform: translateY(0) translateX(0); }
+}
+
+/* Carrusel styles */
+.carrusel-wrapper {
+    position: relative;
+}
+
+.carrusel-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
+
+.carrusel-container::-webkit-scrollbar {
+    display: none;
+}
+
+.carrusel-item {
+    flex: 0 0 auto;
+    width: 280px;
+    margin-right: 20px;
+    transition: transform 0.3s ease;
+}
+
+.carrusel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    border: none;
+}
+
+.carrusel-nav.prev {
+    left: -20px;
+}
+
+.carrusel-nav.next {
+    right: -20px;
+}
+
+.carrusel-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.hover-scale {
+    transition: transform 0.3s ease;
+}
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+.btn-warning {
+    position: relative;
+    overflow: visible;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+    }
+.hero-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+
+
+.categorias-container,
+.ofertas-container,
+.destacados-container {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin: 0 -15px;
+    padding: 0 15px;
+}
+
+.categorias-container::-webkit-scrollbar,
+.ofertas-container::-webkit-scrollbar,
+.destacados-container::-webkit-scrollbar {
+    display: none;
+}
+
+.categorias-container > .col,
+.ofertas-container > .col,
+.destacados-container > .col {
+    flex: 0 0 auto;
+    width: 280px;
+    margin-right: 20px;
+}
+
+/* Newsletter Styles */
+.newsletter {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.newsletter-form .form-control {
+    height: 55px;
+    border: none;
+    padding-left: 20px;
+}
+
+.newsletter-form .btn {
+    font-weight: 600;
+    padding: 0 25px;
+}
+
+/* Testimonials Styles */
+.testimonial-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.rating {
+    color: #ffc107;
+    font-size: 1.1rem;
+}
+
+.avatar {
+    font-weight: 600;
+}
+
+/* Benefits Styles */
+.benefits {
+    background-color: #f9fbfd;
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffb347 0%, #ffcc33 100%);
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .product-image-container {
+        height: 160px;
+    }
+    
+    .hero {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+    }
+    
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .hero-image-container {
+        margin-top: 2rem;
+    }
+    
+    .newsletter .text-center img {
+        max-height: 200px;
+    }
+    
+    .benefits .card {
+        margin-bottom: 20px;
+    }
+}
+
+@media (min-width: 768px) {
+    .carrusel-item,
+    .categorias-container > .col,
+    .ofertas-container > .col,
+    .destacados-container > .col {
+        width: 320px;
+    }
+}
+
+@media (min-width: 992px) {
+    .carrusel-item {
+        width: 280px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .carrusel-item {
+        width: 300px;
+    }
+}
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función mejorada para crear carruseles
+        function setupCarousel(containerSelector, prevBtnSelector, nextBtnSelector) {
+            const container = document.querySelector(containerSelector);
+            const prevBtn = document.querySelector(prevBtnSelector);
+            const nextBtn = document.querySelector(nextBtnSelector);
+            
+            if (!container || !prevBtn || !nextBtn) return;
+            
+            const items = container.children;
+            const itemWidth = items[0].offsetWidth + 20; // Ancho + margen
+            let scrollPosition = 0;
+            const containerWidth = container.offsetWidth;
+            const contentWidth = container.scrollWidth;
+            
+            // Actualizar estado de los botones
+            function updateButtons() {
+                prevBtn.disabled = scrollPosition <= 0;
+                nextBtn.disabled = scrollPosition >= contentWidth - containerWidth;
+            }
+            
+            // Configurar botón anterior
+            prevBtn.addEventListener('click', function() {
+                scrollPosition = Math.max(scrollPosition - containerWidth, 0);
+                container.scrollTo({
+                    left: scrollPosition,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // Configurar botón siguiente
+            nextBtn.addEventListener('click', function() {
+                scrollPosition = Math.min(
+                    scrollPosition + containerWidth, 
+                    contentWidth - containerWidth
+                );
+                container.scrollTo({
+                    left: scrollPosition,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // Actualizar al hacer scroll manual
+            container.addEventListener('scroll', function() {
+                scrollPosition = container.scrollLeft;
+                updateButtons();
+            });
+            
+            // Inicializar
+            updateButtons();
+            
+            // Ajustar al redimensionar
+            window.addEventListener('resize', function() {
+                scrollPosition = container.scrollLeft;
+                updateButtons();
+            });
+        }
+        
+        // Configurar los carruseles
+        setupCarousel('.categorias-container', '.categorias-prev', '.categorias-next');
+        setupCarousel('.ofertas-container', '.ofertas-prev', '.ofertas-next');
+        setupCarousel('.destacados-container', '.destacados-prev', '.destacados-next');
+    });
+</script>
+{% endblock %}

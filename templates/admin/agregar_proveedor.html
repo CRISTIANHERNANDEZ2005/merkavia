@@ -1,0 +1,77 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Agregar Proveedor{% endblock %}
+
+{% block content %}
+<div class="admin-form">
+    <div class="card-header mb-4">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-truck me-2"></i>Agregar Nuevo Proveedor
+        </h5>
+    </div>
+    
+    <form method="POST" action="{{ url_for('agregar_proveedor') }}">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="nombre" class="form-label">Nombre del Proveedor</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="identificacion" class="form-label">Identificación/NIT</label>
+                <input type="text" class="form-control" id="identificacion" name="identificacion" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="tipo" class="form-label">Tipo de Proveedor</label>
+                <select class="form-select" id="tipo" name="tipo" required>
+                    <option value="" selected disabled>Seleccione un tipo</option>
+                    <option value="persona">Persona Natural</option>
+                    <option value="empresa">Empresa</option>
+                </select>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="telefono" class="form-label">Teléfono</label>
+                <input type="tel" class="form-control" id="telefono" name="telefono">
+            </div>
+            
+            <div class="col-12">
+                <label for="direccion" class="form-label">Dirección</label>
+                <input type="text" class="form-control" id="direccion" name="direccion">
+            </div>
+            
+            <div class="col-12">
+                <label for="email" class="form-label">Correo Electrónico</label>
+                <input type="email" class="form-control" id="email" name="email">
+            </div>
+            
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-save me-2"></i>Guardar Proveedor
+                </button>
+                <a href="{{ url_for('admin_proveedores') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .admin-form {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+</style>
+{% endblock %}

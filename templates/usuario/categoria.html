@@ -1,0 +1,117 @@
+{% extends 'usuario/base.html' %}
+
+{% block title %}{{ categoria.nombre }} - Tienda Online{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Migas de pan mejoradas -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light p-3 rounded-3 shadow-sm">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('index') }}" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i> Inicio
+                </a>
+            </li>
+            {% if categoria.parent %}
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('mostrar_categoria', categoria_id=categoria.parent.id) }}" class="text-decoration-none text-primary">
+                        {{ categoria.parent.nombre }}
+                    </a>
+                </li>
+            {% endif %}
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+                {{ categoria.nombre }}
+            </li>
+        </ol>
+    </nav>
+    
+    <!-- Encabezado de categoría -->
+    <div class="category-header mb-5 text-center">
+        <h1 class="display-5 fw-bold text-primary mb-3">{{ categoria.nombre }}</h1>
+        
+        {% if categoria.descripcion %}
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <p class="lead text-muted mb-4">{{ categoria.descripcion }}</p>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="category-icon mb-4">
+            <i class="fas fa-{{ categoria.icono|default('tags') }} fa-4x text-primary"></i>
+        </div>
+    </div>
+    
+    <!-- Subcategorías -->
+    {% if subcategorias %}
+    <div class="subcategories-section">
+        <h2 class="h4 mb-4 text-center text-uppercase fw-bold border-bottom pb-2">Subcategorías</h2>
+        
+        <div class="row g-4">
+            {% for subcategoria in subcategorias %}
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm transition-all hover-scale">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper mb-3 p-3 rounded-circle bg-primary bg-opacity-10 d-inline-block">
+                            <i class="fas fa-{{ subcategoria.icono|default('folder') }} fa-2x text-primary"></i>
+                        </div>
+                        <h3 class="h5 card-title fw-bold mb-3">{{ subcategoria.nombre }}</h3>
+                        <a href="{{ url_for('mostrar_categoria', categoria_id=subcategoria.id) }}" 
+                           class="btn btn-outline-primary px-4 stretched-link">
+                            Explorar <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Estilos personalizados */
+    .hover-scale {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .hover-scale:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+    
+    .category-header {
+        background-color: #f8f9fa;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 3rem;
+    }
+    
+    .icon-wrapper {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover .icon-wrapper {
+        background-color: rgba(13, 110, 253, 0.2) !important;
+        transform: scale(1.1);
+    }
+    
+    .breadcrumb {
+        padding: 0.75rem 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .category-header {
+            padding: 1.5rem;
+        }
+        
+        .display-5 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}

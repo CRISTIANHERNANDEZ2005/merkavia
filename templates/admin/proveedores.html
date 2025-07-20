@@ -1,0 +1,279 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Gestión de Proveedores{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Gestión de Proveedores</h5>
+        <a href="{{ url_for('agregar_proveedor') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Agregar Proveedor
+        </a>
+    </div>
+    
+    <!-- Formulario de búsqueda -->
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin_proveedores') }}" class="row g-3 mb-4" id="searchForm">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Buscar por nombre o identificación</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ request.args.get('search', '') }}" 
+                       placeholder="Ingrese nombre o identificación">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-1"></i>Filtrar
+                </button>
+                <button type="button" id="clearSearch" class="btn btn-outline-secondary btn-sm mx-2">
+                    <i class="fas fa-eraser me-1"></i>Limpiar
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th width="5%">ID</th>
+                    <th width="20%">Nombre</th>
+                    <th width="15%">Identificación</th>
+                    <th width="10%">Tipo</th>
+                    <th width="15%">Contacto</th>
+                    <th width="10%">Estado</th>
+                    <th width="15%">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="providersTableBody">
+                {% if proveedores %}
+                    {% for proveedor in proveedores %}
+                    <tr>
+                        <td class="fw-semibold" data-label="ID">#{{ proveedor.id }}</td>
+                        <td data-label="Nombre">
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ proveedor.nombre }}</h6>
+                                    <small class="text-muted">{{ proveedor.direccion or 'Sin dirección' }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Identificación">{{ proveedor.identificacion }}</td>
+                        <td data-label="Tipo">
+                            <span class="badge bg-{% if proveedor.tipo == 'empresa' %}info{% else %}primary{% endif %} bg-opacity-10 text-{% if proveedor.tipo == 'empresa' %}info{% else %}primary{% endif %}">
+                                {{ proveedor.tipo|capitalize }}
+                            </span>
+                        </td>
+                        <td data-label="Contacto">
+                            <div>
+                                {% if proveedor.telefono %}
+                                    <div><i class="fas fa-phone me-2"></i>{{ proveedor.telefono }}</div>
+                                {% endif %}
+                                {% if proveedor.email %}
+                                    <div><i class="fas fa-envelope me-2"></i>{{ proveedor.email }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td data-label="Estado">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input toggle-activo" 
+                                       type="checkbox" 
+                                       id="activo_{{ proveedor.id }}" 
+                                       data-provider-id="{{ proveedor.id }}"
+                                       {% if proveedor.activo %}checked{% endif %}>
+                                <label class="form-check-label" for="activo_{{ proveedor.id }}">
+                                    {% if proveedor.activo %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger">Inactivo</span>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </td>
+                        <td data-label="Acciones">
+                            <div class="d-flex">
+                                <a href="{{ url_for('editar_proveedor', proveedor_id=proveedor.id) }}" 
+                                   class="btn btn-sm btn-primary me-2"
+                                   data-bs-toggle="tooltip"
+                                   title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('listar_productos_proveedor', proveedor_id=proveedor.id) }}" 
+                                   class="btn btn-sm btn-info me-2"
+                                   data-bs-toggle="tooltip"
+                                   title="Ver Productos">
+                                    <i class="fas fa-boxes"></i>
+                                </a>
+                                <button class="btn btn-sm btn-danger" 
+                                        data-bs-toggle="modal" 
+                                        data-provider-id="{{ proveedor.id }}"
+                                        data-provider-name="{{ proveedor.nombre }}"
+                                        data-bs-target="#deleteModal"
+                                        title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% elif request.args.get('search') %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="no-results">
+                                <i class="fas fa-magnifying-glass fa-3x"></i>
+                                <h5 class="alert alert-danger mb-2">No se encontraron proveedores</h5>
+                                <p class="badge bg-danger bg-opacity-10 text-danger">No hay proveedores que coincidan con los criterios de búsqueda.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="no-results">
+                                <i class="fas fa-truck fa-3x"></i>
+                                <h5 class="alert alert-success mb-2">No hay proveedores registrados</h5>
+                                <p class="badge bg-success bg-opacity-10 text-success">¡Comienza agregando un nuevo proveedor usando el botón de arriba!</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p>¿Estás seguro que deseas eliminar el proveedor <strong id="providerNameToDelete"></strong>?</p>
+                <p class="text-muted small">Esta acción no se puede deshacer y eliminará todos los datos asociados al proveedor.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button id="confirmDeleteBtn" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos específicos para proveedores */
+    .table-hover tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .badge {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+    
+    .contact-info div {
+        margin-bottom: 5px;
+    }
+    
+    @media (max-width: 768px) {
+        .table td[data-label="Contacto"] div {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(trigger => {
+        new bootstrap.Tooltip(trigger);
+    });
+
+   // Configurar el modal de eliminación
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const providerId = button.getAttribute('data-provider-id');
+            const providerName = button.getAttribute('data-provider-name');
+            
+            document.getElementById('providerNameToDelete').textContent = providerName;
+            
+            // Configurar el botón de confirmación
+            document.getElementById('confirmDeleteBtn').onclick = function() {
+                fetch(`/admin/proveedores/eliminar/${providerId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        return response.json().then(err => {
+                            throw new Error(err.message || 'Error al eliminar el proveedor');
+                        });
+                    }
+                })
+                .catch(error => {
+                    alert(error.message);
+                    bootstrap.Modal.getInstance(deleteModal).hide();
+                });
+            };
+        });
+    }
+
+    // Limpiar búsqueda
+    document.getElementById('clearSearch')?.addEventListener('click', function() {
+        document.getElementById('search').value = '';
+        document.getElementById('searchForm').submit();
+    });
+
+    // Toggle para activar/desactivar proveedores
+    document.querySelectorAll('.toggle-activo').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const providerId = this.getAttribute('data-provider-id');
+            const isActive = this.checked;
+            
+            fetch(`/admin/proveedores/toggle_activo/${providerId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    activo: isActive
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const label = this.nextElementSibling;
+                    label.innerHTML = isActive 
+                        ? '<span class="badge bg-success bg-opacity-10 text-success">Activo</span>'
+                        : '<span class="badge bg-danger bg-opacity-10 text-danger">Inactivo</span>';
+                } else {
+                    this.checked = !isActive;
+                    alert(data.message || 'Error al actualizar el estado del proveedor');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !isActive;
+                alert('Error al conectar con el servidor');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

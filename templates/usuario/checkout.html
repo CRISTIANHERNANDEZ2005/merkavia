@@ -1,0 +1,540 @@
+{% extends 'usuario/base.html' %}
+
+{% block title %}Finalizar Compra - Mega Tienda{% endblock %}
+
+{% block content %}
+<style>
+    .is-invalid { border-color: #dc3545 !important; }
+    .invalid-feedback { display: none; color: #dc3545; font-size: 0.875rem; }
+    .is-invalid ~ .invalid-feedback { display: block; }
+    #form-error { display: none; }
+</style>
+
+<div class="container py-4">
+    <!-- Barra de progreso -->
+    <div class="mb-5 text-center">
+        <h1 class="mb-3">Finalizar tu compra</h1>
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="progress position-relative" style="height: 8px; width: 60%; max-width: 500px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="d-flex justify-content-between position-absolute w-100" style="max-width: 500px;">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <span class="mt-2 small">Carrito</span>
+                </div>
+                <div class="d-flex flex-column align-items-center">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <span class="mt-2 fw-bold">Envío & Pago</span>
+                </div>
+                <div class="d-flex flex-column align-items-center">
+                    <div class="rounded-circle bg-light border border-secondary d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                        <i class="fas fa-check text-secondary"></i>
+                    </div>
+                    <span class="mt-2 small text-secondary">Confirmación</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="form-error" class="alert alert-danger text-center" role="alert">
+        Por favor, corrige los errores en el formulario antes de continuar.
+    </div>
+    
+    <form method="POST" action="{{ url_for('checkout') }}" id="checkout-form" novalidate>
+        <div class="row g-4">
+            <!-- Sección izquierda: Dirección y Método de Pago -->
+            <div class="col-lg-8">
+                <!-- Dirección de envío -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light py-3">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt text-primary me-2"></i> Dirección de Envío</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="nombre" class="form-label">Nombre Completo <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" value="{{ session['usuario_nombre'] }}" required>
+                                <div class="invalid-feedback">El nombre es requerido.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="Ej: +57 304 493 1728" required>
+                                <div class="invalid-feedback">Ingresa un número de teléfono válido (solo números y opcionalmente +).</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Calle, número, apartamento" required>
+                                <div class="invalid-feedback">La dirección es requerida.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="ciudad" class="form-label">Ciudad <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ciudad" name="ciudad" required>
+                                <div class="invalid-feedback">La ciudad es requerida.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="codigo_postal" class="form-label">Código Postal <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="codigo_postal" name="codigo_postal" required>
+                                <div class="invalid-feedback">Ingresa un código postal válido (solo números, 4-10 dígitos).</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="instrucciones" class="form-label">Instrucciones especiales (opcional)</label>
+                                <textarea class="form-control" id="instrucciones" name="instrucciones" rows="2" placeholder="Detalles adicionales para la entrega"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Método de pago -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light py-3">
+                        <h5 class="mb-0"><i class="fas fa-credit-card text-primary me-2"></i> Método de Pago</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <div class="form-check border rounded p-3 mb-3">
+                                <input class="form-check-input" type="radio" name="metodo_pago" id="tarjeta" value="tarjeta" checked>
+                                <label class="form-check-label fw-bold d-flex align-items-center" for="tarjeta">
+                                    <i class="far fa-credit-card fa-2x text-primary me-3"></i>
+                                    <div>
+                                        <div>Tarjeta de Crédito/Débito</div>
+                                        <small class="text-muted d-block">Pago seguro con cifrado SSL</small>
+                                    </div>
+                                </label>
+                            
+                                <div id="card-fields" class="mt-3 ps-5">
+                                    <div class="mb-3">
+                                        <label for="numero_tarjeta" class="form-label">Número de Tarjeta <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-credit-card"></i></span>
+                                            <input type="text" class="form-control" id="numero_tarjeta" name="numero_tarjeta" placeholder="0000 0000 0000 0000" required>
+                                        </div>
+                                        <div class="invalid-feedback">El número de tarjeta debe tener 16 dígitos.</div>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="fecha_expiracion" class="form-label">Fecha de Expiración <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                                <input type="text" class="form-control" id="fecha_expiracion" name="fecha_expiracion" placeholder="MM/AA" required>
+                                            </div>
+                                            <div class="invalid-feedback" id="fecha_expiracion_feedback">Formato MM/AA válido requerido o tarjeta vencida.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="cvv" class="form-label">CVV <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                                <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" required>
+                                            </div>
+                                            <div class="invalid-feedback">CVV debe tener 3 o 4 dígitos.</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row g-3 mt-1">
+                                        <div class="col-md-6">
+                                            <label for="nombre_tarjeta" class="form-label">Nombre en la Tarjeta <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="nombre_tarjeta" name="nombre_tarjeta" required>
+                                            <div class="invalid-feedback">El nombre en la tarjeta es requerido.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tipo de Tarjeta</label>
+                                            <select class="form-select" id="tipo_tarjeta">
+                                                <option>Visa</option>
+                                                <option>MasterCard</option>
+                                                <option>American Express</option>
+                                                <option>Otra</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check border rounded p-3">
+                                <input class="form-check-input" type="radio" name="metodo_pago" id="contraentrega" value="contraentrega">
+                                <label class="form-check-label fw-bold d-flex align-items-center" for="contraentrega">
+                                    <i class="fas fa-money-bill-wave fa-2x text-success me-3"></i>
+                                    <div>
+                                        <div>Pago Contra Entrega</div>
+                                        <small class="text-muted d-block">Paga cuando recibas tu pedido</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección derecha: Resumen de compra -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm sticky-top" style="top: 85px;">
+                    <div class="card-header bg-light py-3">
+                        <h5 class="mb-0"><i class="fas fa-receipt text-primary me-2"></i> Resumen de Compra</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="mb-3 fw-normal">Tu pedido ({{ items|length }} productos)</h6>
+                        
+                        <div class="border-bottom pb-3 mb-3" style="max-height: 300px; overflow-y: auto;">
+                            {% for item in items %}
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <img src="{{ item.producto.imagen }}" class="rounded" alt="{{ item.producto.nombre }}" style="width: 70px; height: 70px; object-fit: cover;">
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">{{ item.producto.nombre }}</h6>
+                                    <small class="text-muted">{{ item.cantidad }} × ${{ item.producto.precio|round(2) }}</small>
+                                    <div class="mt-1 fw-bold">${{ (item.producto.precio * item.cantidad)|round(2) }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span>${{ (total + descuento_total)|round(2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Envío</span>
+                                <span class="text-success">Gratis</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Descuento</span>
+                                <span class="text-danger">-${{ descuento_total|round(2) }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Agregar en la sección de resumen de compra -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Puntos disponibles</span>
+                                <span class="text-primary" id="puntos-disponibles">{{ puntos_usuario }} pts</span>
+                            </div>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="puntos-canjear" 
+                                       placeholder="Puntos a canjear" min="100" max="{{ puntos_usuario }}" 
+                                       step="100" value="0">
+                                <button class="btn btn-outline-primary" type="button" id="btn-canjear">
+                                    Canjear
+                                </button>
+                            </div>
+                            <small class="text-muted">10 puntos = $1 de descuento</small>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span>Descuento por puntos</span>
+                                <span class="text-success" id="descuento-puntos">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Actualizar el total para incluir descuento por puntos -->
+                        <div class="d-flex justify-content-between fw-bold fs-5 border-top pt-3">
+                            <span>Total</span>
+                            <span id="total-con-descuento">${{ total|round(2) }}</span>
+                        </div>
+
+                        
+                        <button type="submit" class="btn btn-primary w-100 mt-4 py-3 fw-bold" id="confirm-button" disabled>
+                            <i class="fas fa-lock me-2"></i> Confirmar Compra
+                        </button>
+                        
+                        <div class="text-center mt-3">
+                            <small class="text-muted"><i class="fas fa-lock me-1"></i> Transacción segura - Tus datos están protegidos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('checkout-form');
+    const formError = document.getElementById('form-error');
+    const confirmButton = document.getElementById('confirm-button');
+    const tarjetaRadio = document.getElementById('tarjeta');
+    const contraentregaRadio = document.getElementById('contraentrega');
+    const cardFields = document.getElementById('card-fields');
+    const numeroTarjeta = document.getElementById('numero_tarjeta');
+    const fechaExpiracion = document.getElementById('fecha_expiracion');
+    const cvv = document.getElementById('cvv');
+    const nombreTarjeta = document.getElementById('nombre_tarjeta');
+    const nombre = document.getElementById('nombre');
+    const telefono = document.getElementById('telefono');
+    const direccion = document.getElementById('direccion');
+    const ciudad = document.getElementById('ciudad');
+    const codigoPostal = document.getElementById('codigo_postal');
+
+    // Track which fields have been touched
+    const touched = {
+        nombre: false,
+        telefono: false,
+        direccion: false,
+        ciudad: false,
+        codigo_postal: false,
+        numero_tarjeta: false,
+        fecha_expiracion: false,
+        cvv: false,
+        nombre_tarjeta: false
+    };
+
+    function toggleCardFields() {
+        if (tarjetaRadio.checked) {
+            cardFields.style.display = 'block';
+            numeroTarjeta.required = true;
+            fechaExpiracion.required = true;
+            cvv.required = true;
+            nombreTarjeta.required = true;
+        } else {
+            cardFields.style.display = 'none';
+            numeroTarjeta.required = false;
+            fechaExpiracion.required = false;
+            cvv.required = false;
+            nombreTarjeta.required = false;
+            // Clear card field validations
+            [numeroTarjeta, fechaExpiracion, cvv, nombreTarjeta].forEach(field => {
+                field.classList.remove('is-invalid');
+                touched[field.id] = false;
+            });
+        }
+        validateForm();
+    }
+
+    function validateField(field, isSubmit = false) {
+        const fieldName = field.id;
+        let isValid = true;
+        let errorMessage = '';
+
+        if (!touched[fieldName] && !isSubmit) {
+            field.classList.remove('is-invalid');
+            return true;
+        }
+
+        switch (fieldName) {
+            case 'nombre':
+                if (!field.value.trim()) {
+                    isValid = false;
+                    errorMessage = 'El nombre es requerido.';
+                }
+                break;
+            case 'telefono':
+                if (!field.value.match(/^\+?\d{7,15}$/)) {
+                    isValid = false;
+                    errorMessage = 'Ingresa un número de teléfono válido (solo números y opcionalmente +).';
+                }
+                break;
+            case 'direccion':
+                if (!field.value.trim()) {
+                    isValid = false;
+                    errorMessage = 'La dirección es requerida.';
+                }
+                break;
+            case 'ciudad':
+                if (!field.value.trim()) {
+                    isValid = false;
+                    errorMessage = 'La ciudad es requerida.';
+                }
+                break;
+            case 'codigo_postal':
+                if (!field.value.match(/^\d{4,10}$/)) {
+                    isValid = false;
+                    errorMessage = 'Ingresa un código postal válido (solo números, 4-10 dígitos).';
+                }
+                break;
+            case 'numero_tarjeta':
+                if (tarjetaRadio.checked && !field.value.replace(/\D/g, '').match(/^\d{16}$/)) {
+                    isValid = false;
+                    errorMessage = 'El número de tarjeta debe tener 16 dígitos.';
+                }
+                break;
+            case 'fecha_expiracion':
+                if (tarjetaRadio.checked) {
+                    if (!field.value.match(/^\d{2}\/\d{2}$/)) {
+                        isValid = false;
+                        errorMessage = 'Formato MM/AA válido requerido.';
+                    } else {
+                        try {
+                            const [mes, anio] = field.value.split('/').map(Number);
+                            const currentYear = new Date().getFullYear() % 100;
+                            const currentMonth = new Date().getMonth() + 1;
+                            if (mes < 1 || mes > 12) {
+                                isValid = false;
+                                errorMessage = 'Mes inválido (01-12).';
+                            } else if (anio < currentYear || (anio === currentYear && mes < currentMonth)) {
+                                isValid = false;
+                                errorMessage = 'La tarjeta está vencida.';
+                            }
+                        } catch {
+                            isValid = false;
+                            errorMessage = 'Formato MM/AA inválido.';
+                        }
+                    }
+                }
+                break;
+            case 'cvv':
+                if (tarjetaRadio.checked && !field.value.match(/^\d{3,4}$/)) {
+                    isValid = false;
+                    errorMessage = 'CVV debe tener 3 o 4 dígitos.';
+                }
+                break;
+            case 'nombre_tarjeta':
+                if (tarjetaRadio.checked && !field.value.trim()) {
+                    isValid = false;
+                    errorMessage = 'El nombre en la tarjeta es requerido.';
+                }
+                break;
+        }
+
+        if (!isValid) {
+            field.classList.add('is-invalid');
+            if (fieldName === 'fecha_expiracion') {
+                document.getElementById('fecha_expiracion_feedback').textContent = errorMessage;
+            }
+        } else {
+            field.classList.remove('is-invalid');
+        }
+
+        return isValid;
+    }
+
+    function validateForm(isSubmit = false) {
+        let isValid = true;
+
+        // Validate address fields
+        [nombre, telefono, direccion, ciudad, codigoPostal].forEach(field => {
+            if (!validateField(field, isSubmit)) {
+                isValid = false;
+            }
+        });
+
+        // Validate card fields if tarjeta is selected
+        if (tarjetaRadio.checked) {
+            [numeroTarjeta, fechaExpiracion, cvv, nombreTarjeta].forEach(field => {
+                if (!validateField(field, isSubmit)) {
+                    isValid = false;
+                }
+            });
+        }
+
+        confirmButton.disabled = !isValid;
+        return isValid;
+    }
+
+    // Mark field as touched on blur
+    [nombre, telefono, direccion, ciudad, codigoPostal, numeroTarjeta, fechaExpiracion, cvv, nombreTarjeta].forEach(field => {
+        if (field) {
+            field.addEventListener('blur', () => {
+                touched[field.id] = true;
+                validateField(field);
+            });
+            field.addEventListener('input', () => {
+                if (touched[field.id]) {
+                    validateField(field);
+                }
+            });
+        }
+    });
+
+    // Event listeners for payment method radios
+    tarjetaRadio.addEventListener('change', toggleCardFields);
+    contraentregaRadio.addEventListener('change', toggleCardFields);
+
+    // Form submission
+    form.addEventListener('submit', (e) => {
+        Object.keys(touched).forEach(key => touched[key] = true); // Mark all fields as touched
+        if (!validateForm(true)) {
+            e.preventDefault();
+            formError.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            formError.style.display = 'none';
+        }
+    });
+
+    // Credit card formatting
+    if (numeroTarjeta) {
+        numeroTarjeta.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{4})/g, '$1 ').trim();
+            e.target.value = value.substring(0, 19);
+            if (touched.numero_tarjeta) validateField(numeroTarjeta);
+        });
+    }
+
+    if (fechaExpiracion) {
+        fechaExpiracion.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value.substring(0, 5);
+            if (touched.fecha_expiracion) validateField(fechaExpiracion);
+        });
+    }
+
+    if (cvv) {
+        cvv.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+            if (touched.cvv) validateField(cvv);
+        });
+    }
+
+    // Initialize on load
+    toggleCardFields();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const puntosCanjear = document.getElementById('puntos-canjear');
+    const btnCanjear = document.getElementById('btn-canjear');
+    const descuentoPuntos = document.getElementById('descuento-puntos');
+    const totalConDescuento = document.getElementById('total-con-descuento');
+    const totalOriginal = parseFloat("{{ total }}");
+    
+    btnCanjear.addEventListener('click', function() {
+        const puntos = parseInt(puntosCanjear.value);
+        if (isNaN(puntos) || puntos <= 0) return;
+        
+        fetch("{{ url_for('canjear_puntos') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `puntos=${puntos}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizar descuento
+                const descuento = parseFloat(data.descuento);
+                descuentoPuntos.textContent = `$${descuento.toFixed(2)}`;
+                
+                // Actualizar total
+                const nuevoTotal = totalOriginal - descuento;
+                totalConDescuento.textContent = `$${nuevoTotal.toFixed(2)}`;
+                
+                // Actualizar puntos disponibles
+                document.getElementById('puntos-disponibles').textContent = 
+                    `${data.puntos_restantes} pts`;
+                
+                // Añadir campo oculto con el descuento para el formulario
+                let inputDescuento = document.getElementById('descuento-puntos-input');
+                if (!inputDescuento) {
+                    inputDescuento = document.createElement('input');
+                    inputDescuento.type = 'hidden';
+                    inputDescuento.name = 'descuento_puntos';
+                    inputDescuento.id = 'descuento-puntos-input';
+                    document.getElementById('checkout-form').appendChild(inputDescuento);
+                }
+                inputDescuento.value = descuento;
+            } else {
+                alert(data.message);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

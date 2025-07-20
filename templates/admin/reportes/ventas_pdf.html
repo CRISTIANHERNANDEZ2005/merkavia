@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Ventas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .logo { height: 80px; }
+        .title { text-align: center; margin-bottom: 30px; }
+        .title h1 { margin: 0; color: #2c3e50; }
+        .title p { margin: 5px 0 0; color: #7f8c8d; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; color: #2c3e50; }
+        .completed { color: #27ae60; }
+        .pending { color: #f39c12; }
+        .cancelled { color: #e74c3c; }
+        .summary { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .summary-item strong { color: #2c3e50; }
+        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ logo }}" class="logo">
+        <div>
+            <p>Generado: {{ fecha }}</p>
+            <p>Página 1 de 1</p>
+        </div>
+    </div>
+    
+    <div class="title">
+        <h1>Reporte de Ventas</h1>
+        <p>Historial de pedidos y ventas</p>
+    </div>
+    
+    <div class="summary">
+        <div class="summary-item"><strong>Total Pedidos:</strong> <span>{{ total_pedidos }}</span></div>
+        <div class="summary-item"><strong>Total Ventas:</strong> <span>${{ "%.2f"|format(total_ventas) }}</span></div>
+        <div class="summary-item"><strong>Pedidos Completados:</strong> <span>{{ pedidos_completados }}</span></div>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Método Pago</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+            <tr>
+                <td>{{ pedido.id }}</td>
+                <td>{{ pedido.fecha_pedido.strftime('%d/%m/%Y') }}</td>
+                <td>{{ pedido.usuario.nombre }}</td>
+                <td>${{ "%.2f"|format(pedido.total) }}</td>
+                <td>{{ pedido.metodo_pago|capitalize }}</td>
+                <td class="
+                    {% if pedido.estado == 'completado' %}completed
+                    {% elif pedido.estado == 'pendiente' %}pending
+                    {% else %}cancelled{% endif %}">
+                    {{ pedido.estado|capitalize }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        Reporte generado automáticamente por el Sistema de Gestión de Tienda
+    </div>
+</body>
+</html>

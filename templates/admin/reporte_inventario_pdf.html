@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Inventario - {{ fecha }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        h1 {
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 14px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 3px;
+        }
+        .header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .summary {
+            margin-top: 30px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+        .summary-item {
+            margin: 5px 0;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Reporte de Inventario</h1>
+        <p>Generado el: {{ fecha }}</p>
+        <p>Total de productos: {{ total_productos }}</p>
+    </div>
+
+    <h2>Resumen General</h2>
+    <table>
+        <tr>
+            <th>Concepto</th>
+            <th class="text-right">Valor</th>
+        </tr>
+        <tr>
+            <td>Valor Total Base</td>
+            <td class="text-right">${{ "{:,.2f}".format(valor_total_base) }}</td>
+        </tr>
+        <tr>
+            <td>Descuento Total</td>
+            <td class="text-right">${{ "{:,.2f}".format(descuento_total) }}</td>
+        </tr>
+        <tr>
+            <td>Valor Total Final</td>
+            <td class="text-right">${{ "{:,.2f}".format(valor_total_final) }}</td>
+        </tr>
+        <tr>
+            <td>Descuento Promedio</td>
+            <td class="text-right">{{ "{:,.1f}".format(descuento_promedio) }}%</td>
+        </tr>
+    </table>
+
+    <h2>Productos por Categoría</h2>
+    <table>
+        <tr>
+            <th>Categoría</th>
+            <th class="text-right">Cantidad</th>
+            <th class="text-right">Valor Base</th>
+            <th class="text-right">Valor Final</th>
+        </tr>
+        {% for categoria, data in categorias_stock.items() %}
+        <tr>
+            <td>{{ categoria }}</td>
+            <td class="text-right">{{ data.stock }}</td>
+            <td class="text-right">${{ "{:,.2f}".format(data.valor_base) }}</td>
+            <td class="text-right">${{ "{:,.2f}".format(data.valor_final) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Detalle de Productos</h2>
+    <table>
+        <tr>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th class="text-right">Stock</th>
+            <th class="text-right">Precio Base</th>
+            <th class="text-right">Precio Final</th>
+            <th class="text-right">Descuento</th>
+            <th class="text-right">Valor Total</th>
+            <th>Estado</th>
+        </tr>
+        {% for producto in productos %}
+        {% set valor_base = producto.precio * producto.stock %}
+        {% set valor_final = producto.precio_final * producto.stock %}
+        {% set categoria_principal = producto.categoria.parent.nombre if producto.categoria.parent else producto.categoria.nombre %}
+        <tr>
+            <td>{{ producto.nombre }}{% if producto.marca %} ({{ producto.marca }}){% endif %}</td>
+            <td>{{ categoria_principal }}{% if producto.categoria.parent %} / {{ producto.categoria.nombre }}{% endif %}</td>
+            <td class="text-right">{{ producto.stock }}</td>
+            <td class="text-right">${{ "{:,.2f}".format(producto.precio) }}</td>
+            <td class="text-right">${{ "{:,.2f}".format(producto.precio_final) }}</td>
+            <td class="text-right">{% if producto.descuento > 0 %}{{ "{:,.0f}".format(producto.descuento) }}%{% else %}-{% endif %}</td>
+            <td class="text-right">${{ "{:,.2f}".format(valor_final) }}</td>
+            <td>
+                {% if producto.stock < producto.stock_minimo %}
+                BAJO STOCK
+                {% elif producto.stock > producto.stock_maximo %}
+                SOBRE STOCK
+                {% else %}
+                NORMAL
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="summary">
+        <div class="summary-item"><strong>Total Productos:</strong> {{ total_productos }}</div>
+        <div class="summary-item"><strong>Productos bajo stock:</strong> {{ productos_bajo_stock }}</div>
+        <div class="summary-item"><strong>Productos sobre stock:</strong> {{ productos_sobre_stock }}</div>
+    </div>
+</body>
+</html>

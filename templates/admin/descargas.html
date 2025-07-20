@@ -1,0 +1,269 @@
+{% extends 'admin/base.html' %}
+{% block title %}Descargas de Reportes{% endblock %}
+
+{% block styles %}
+<style>
+    .report-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: none;
+        height: 100%;
+    }
+    
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header-custom {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .card-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #2575fc;
+    }
+    
+    .btn-download {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        border: none;
+        border-radius: 30px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(37, 117, 252, 0.4);
+    }
+    
+    .btn-download i {
+        margin-right: 8px;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-title {
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    
+    .page-description {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .card-text {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado de página -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title"><i class="fas fa-file-download mr-2"></i>Descargas de Reportes</h1>
+                <p class="page-description">Descarga informes detallados en formato PDF</p>
+            </div>
+            <div>
+                <span class="badge badge-light" style="font-size: 1rem;">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjetas de reportes -->
+    <div class="row">
+        <!-- Reporte de Proveedores -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="report-card">
+                <div class="card-header-custom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fas fa-truck mr-2"></i>Proveedores</h5>
+                        <span class="badge badge-light">{{ proveedores_count }} registros</span>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-truck-loading"></i>
+                    </div>
+                    <p class="card-text">Lista completa de todos los proveedores registrados con sus productos y datos de contacto.</p>
+                    <a href="{{ url_for('descargar_proveedores_pdf') }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('descargar_proveedores_excel') }}" class="btn btn-success ml-2">
+                        <i class="fas fa-file-excel"></i> Descargar Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reporte de Productos -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="report-card">
+                <div class="card-header-custom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fas fa-boxes mr-2"></i>Productos</h5>
+                        <span class="badge badge-light">{{ productos_count }} registros</span>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <p class="card-text">Inventario completo de productos activos con stock, precios y categorías.</p>
+                    <a href="{{ url_for('descargar_productos_pdf') }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('descargar_productos_excel') }}" class="btn btn-success ml-2">
+                        <i class="fas fa-file-excel"></i> Descargar Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reporte de Categorías -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="report-card">
+                <div class="card-header-custom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fas fa-sitemap mr-2"></i>Categorías</h5>
+                        <span class="badge badge-light">{{ categorias_count }} principales</span>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <p class="card-text">Estructura jerárquica de categorías y subcategorías con sus productos asociados.</p>
+                    <a href="{{ url_for('descargar_categorias_pdf') }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('descargar_categorias_excel') }}" class="btn btn-success ml-2">
+                        <i class="fas fa-file-excel"></i> Descargar Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reporte de Usuarios -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="report-card">
+                <div class="card-header-custom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fas fa-users mr-2"></i>Usuarios</h5>
+                        <span class="badge badge-light">{{ usuarios_count }} registros</span>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <p class="card-text">Listado completo de usuarios registrados con sus roles y datos de contacto.</p>
+                    <a href="{{ url_for('descargar_usuarios_pdf') }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('descargar_usuarios_excel') }}" class="btn btn-success ml-2">
+                        <i class="fas fa-file-excel"></i> Descargar Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reporte de Compras -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="report-card">
+                <div class="card-header-custom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fas fa-shopping-cart mr-2"></i>Compras</h5>
+                        <span class="badge badge-light">{{ compras_count }} registros</span>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <p class="card-text">Historial detallado de compras a proveedores con productos y montos.</p>
+                    <a href="{{ url_for('descargar_compras_pdf') }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('descargar_compras_excel') }}" class="btn btn-success ml-2">
+                        <i class="fas fa-file-excel"></i> Descargar Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reporte de Ventas -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="report-card">
+                <div class="card-header-custom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fas fa-cash-register mr-2"></i>Ventas</h5>
+                        <span class="badge badge-light">{{ ventas_count }} registros</span>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <p class="card-text">Historial completo de ventas a clientes con detalles de productos y pagos.</p>
+                    <a href="{{ url_for('descargar_ventas_pdf') }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('descargar_ventas_excel') }}" class="btn btn-success ml-2">
+                        <i class="fas fa-file-excel"></i> Descargar Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Efecto hover mejorado para las tarjetas
+    $(document).ready(function() {
+        $('.report-card').hover(
+            function() {
+                $(this).find('.card-header-custom').css('background', 'linear-gradient(135deg, #2575fc 0%, #6a11cb 100%)');
+            },
+            function() {
+                $(this).find('.card-header-custom').css('background', 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)');
+            }
+        );
+    });
+</script>
+{% endblock %}

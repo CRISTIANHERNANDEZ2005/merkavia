@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Proveedores</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .logo { height: 80px; }
+        .title { text-align: center; margin-bottom: 30px; }
+        .title h1 { margin: 0; color: #2c3e50; }
+        .title p { margin: 5px 0 0; color: #7f8c8d; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; color: #2c3e50; }
+        .active { color: #27ae60; font-weight: bold; }
+        .inactive { color: #e74c3c; }
+        .summary { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .summary-item strong { color: #2c3e50; }
+        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #7f8c8d; }
+        .product-count { background-color: #3498db; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ logo }}" class="logo">
+        <div>
+            <p>Generado: {{ fecha }}</p>
+            <p>Página 1 de 1</p>
+        </div>
+    </div>
+    
+    <div class="title">
+        <h1>Reporte de Proveedores</h1>
+        <p>Listado completo de proveedores y sus productos</p>
+    </div>
+    
+    <div class="summary">
+        <div class="summary-item"><strong>Total Proveedores:</strong> <span>{{ total_proveedores }}</span></div>
+        <div class="summary-item"><strong>Proveedores Activos:</strong> <span>{{ proveedores_activos }}</span></div>
+        <div class="summary-item"><strong>Productos en Proveedores:</strong> <span>{{ total_productos }}</span></div>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Identificación</th>
+                <th>Tipo</th>
+                <th>Productos</th>
+                <th>Contacto</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proveedor in proveedores %}
+            <tr>
+                <td>{{ proveedor.id }}</td>
+                <td>{{ proveedor.nombre }}</td>
+                <td>{{ proveedor.identificacion }}</td>
+                <td>{{ proveedor.tipo }}</td>
+                <td><span class="product-count">{{ productos_por_proveedor[proveedor.nombre] }}</span></td>
+                <td>
+                    {% if proveedor.email %}{{ proveedor.email }}<br>{% endif %}
+                    {% if proveedor.telefono %}{{ proveedor.telefono }}{% endif %}
+                </td>
+                <td class="{% if proveedor.activo %}active{% else %}inactive{% endif %}">
+                    {% if proveedor.activo %}Activo{% else %}Inactivo{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        Reporte generado automáticamente por el Sistema de Gestión de Tienda
+    </div>
+</body>
+</html>

@@ -1,0 +1,123 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Agregar Nuevo Usuario{% endblock %}
+
+{% block content %}
+<div class="admin-form">
+    <h4 class="mb-4">Agregar Nuevo Usuario</h4>
+    <form method="POST" action="{{ url_for('agregar_usuario') }}">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Identificación</label>
+                <input type="text" name="identificacion" class="form-control {% if errors.identificacion %}is-invalid{% endif %}" 
+                       value="{{ form_data.identificacion if form_data else '' }}" required>
+                {% if errors.identificacion %}
+                <div class="invalid-feedback" id="error-identificacion">{{ errors.identificacion }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre Completo</label>
+                <input type="text" name="nombre" class="form-control {% if errors.nombre %}is-invalid{% endif %}" 
+                       value="{{ form_data.nombre if form_data else '' }}" required>
+                {% if errors.nombre %}
+                <div class="invalid-feedback" id="error-nombre">{{ errors.nombre }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control {% if errors.email %}is-invalid{% endif %}" 
+                       value="{{ form_data.email if form_data else '' }}" required>
+                {% if errors.email %}
+                <div class="invalid-feedback" id="error-email">{{ errors.email }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Contraseña</label>
+                <div class="input-group">
+                    <input type="password" name="password" id="passwordField" class="form-control {% if errors.password %}is-invalid{% endif %}" required>
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    {% if errors.password %}
+                    <div class="invalid-feedback" id="error-password">{{ errors.password }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Confirmar Contraseña</label>
+                <div class="input-group">
+                    <input type="password" name="confirm_password" id="confirmPasswordField" class="form-control {% if errors.confirm_password %}is-invalid{% endif %}" required>
+                    <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    {% if errors.confirm_password %}
+                    <div class="invalid-feedback" id="error-confirm-password">{{ errors.confirm_password }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Rol</label>
+                <select name="es_admin" class="form-select" required>
+                    <option value="0" {% if form_data and form_data.es_admin == '0' %}selected{% endif %}>Cliente</option>
+                    <option value="1" {% if form_data and form_data.es_admin == '1' %}selected{% endif %}>Administrador</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <a href="{{ url_for('admin_usuarios') }}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar Usuario</button>
+        </div>
+    </form>
+</div>
+<style>
+    .invalid-feedback {
+        display: block;
+        font-size: 0.875rem;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle para mostrar/ocultar contraseña
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordField = document.getElementById('passwordField');
+        
+        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+        const confirmPasswordField = document.getElementById('confirmPasswordField');
+        
+        togglePassword.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+        
+        toggleConfirmPassword.addEventListener('click', function() {
+            const type = confirmPasswordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPasswordField.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+
+        // Ocultar mensajes de error después de 5 segundos
+        const errorMessages = [
+            'error-identificacion',
+            'error-nombre',
+            'error-email',
+            'error-password',
+            'error-confirm-password'
+        ];
+
+        errorMessages.forEach(id => {
+            const errorElement = document.getElementById(id);
+            if (errorElement) {
+                setTimeout(() => {
+                    errorElement.style.display = 'none';
+                    // También puedes remover la clase is-invalid del campo de entrada correspondiente
+                    const inputField = errorElement.closest('.mb-3').querySelector('input, select');
+                    if (inputField) {
+                        inputField.classList.remove('is-invalid');
+                    }
+                }, 5000);
+            }
+        });
+    });
+</script>
+{% endblock %}

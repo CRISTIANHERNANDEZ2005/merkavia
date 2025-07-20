@@ -1,0 +1,68 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Editar Usuario: {{ usuario.nombre }}{% endblock %}
+
+{% block content %}
+<div class="admin-form">
+    <h4 class="mb-4">Editar Usuario: {{ usuario.nombre }}</h4>
+    <form method="POST" action="{{ url_for('editar_usuario', usuario_id=usuario.id) }}">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Identificacion</label>
+                <input type="text" name="identificacion" class="form-control {% if errors.identificacion %}is-invalid{% endif %}" 
+                       value="{{ form_data.identificacion if form_data else usuario.identificacion }}" required>
+                {% if errors.identificacion %}
+                <div class="invalid-feedback">{{ errors.identificacion }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre Completo</label>
+                <input type="text" name="nombre" class="form-control {% if errors.nombre %}is-invalid{% endif %}" 
+                       value="{{ form_data.nombre if form_data else usuario.nombre }}" required>
+                {% if errors.nombre %}
+                <div class="invalid-feedback">{{ errors.nombre }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control {% if errors.email %}is-invalid{% endif %}" 
+                       value="{{ form_data.email if form_data else usuario.email }}" required>
+                {% if errors.email %}
+                <div class="invalid-feedback">{{ errors.email }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nueva Contraseña (dejar en blanco para no cambiar)</label>
+                <input type="password" name="password" class="form-control {% if errors.password %}is-invalid{% endif %}">
+                {% if errors.password %}
+                <div class="invalid-feedback">{{ errors.password }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Confirmar Nueva Contraseña</label>
+                <input type="password" name="confirm_password" class="form-control {% if errors.confirm_password %}is-invalid{% endif %}">
+                {% if errors.confirm_password %}
+                <div class="invalid-feedback">{{ errors.confirm_password }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Rol</label>
+                <select name="es_admin" class="form-select" required>
+                    <option value="0" {% if (form_data and form_data.es_admin == '0') or (not form_data and not usuario.es_admin) %}selected{% endif %}>Cliente</option>
+                    <option value="1" {% if (form_data and form_data.es_admin == '1') or (not form_data and usuario.es_admin) %}selected{% endif %}>Administrador</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <a href="{{ url_for('admin_usuarios') }}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Actualizar Usuario</button>
+        </div>
+    </form>
+</div>
+<style>
+    .invalid-feedback {
+        display: block;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}

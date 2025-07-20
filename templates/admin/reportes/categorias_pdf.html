@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Categorías</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .logo { 
+            height: 80px; 
+        }
+        
+        .title { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        
+        .title h1 { 
+            margin: 0; 
+            color: #2c3e50; 
+            font-size: 24px;
+        }
+        
+        .title p { 
+            margin: 5px 0 0; 
+            color: #7f8c8d; 
+            font-size: 16px;
+        }
+        
+        .summary {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .summary-item strong {
+            color: #2c3e50;
+        }
+        
+        /* Estructura de categorías */
+        .category-container {
+            margin-bottom: 30px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+        
+        .category-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .category-info {
+            font-size: 13px;
+            color: #ecf0f1;
+            font-weight: normal;
+        }
+        
+        .subcategory {
+            border-bottom: 1px solid #eee;
+        }
+        
+        .subcategory:last-child {
+            border-bottom: none;
+        }
+        
+        .subcategory-header {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .products-table th {
+            background-color: #f2f2f2;
+            color: #2c3e50;
+            padding: 8px 15px;
+            text-align: left;
+            font-size: 13px;
+        }
+        
+        .products-table td {
+            padding: 8px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        
+        .products-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .product-price {
+            font-family: 'Courier New', monospace;
+            color: #27ae60;
+            text-align: right;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #7f8c8d;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ logo }}" class="logo">
+            <div>
+                <p>Generado: {{ fecha }}</p>
+                <p>Página 1 de 1</p>
+            </div>
+        </div>
+        
+        <div class="title">
+            <h1>Reporte de Categorías</h1>
+            <p>Estructura completa de categorías y productos</p>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-item"><strong>Total Categorías:</strong> <span>{{ total_categorias }}</span></div>
+            <div class="summary-item"><strong>Total Subcategorías:</strong> <span>{{ total_subcategorias }}</span></div>
+            <div class="summary-item"><strong>Total Productos:</strong> <span>{{ total_productos }}</span></div>
+        </div>
+        
+        {% for cat_data in categorias %}
+        <div class="category-container">
+            <div class="category-header">
+                <div>{{ cat_data.categoria.nombre }}</div>
+                <div class="category-info">
+                    {{ cat_data.subcategorias|length }} subcategorías | 
+                    {{ cat_data.total_productos_principal }} productos directos | 
+                    {{ cat_data.total_productos_subcategorias }} productos en subcategorías
+                </div>
+            </div>
+            
+            {% for subcat_data in cat_data.subcategorias %}
+            <div class="subcategory">
+                <div class="subcategory-header">
+                    <div>{{ subcat_data.subcategoria.nombre }}</div>
+                    <div>{{ subcat_data.productos|length }} productos</div>
+                </div>
+                
+                {% if subcat_data.productos %}
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in subcat_data.productos %}
+                        <tr>
+                            <td>{{ producto.nombre }}</td>
+                            <td class="product-price">${{ "%.2f"|format(producto.precio_final) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            {% if cat_data.productos_principal %}
+            <div class="subcategory">
+                <div class="subcategory-header">
+                    <div>Productos directos en {{ cat_data.categoria.nombre }}</div>
+                    <div>{{ cat_data.productos_principal|length }} productos</div>
+                </div>
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in cat_data.productos_principal %}
+                        <tr>
+                            <td>{{ producto.nombre }}</td>
+                            <td class="product-price">${{ "%.2f"|format(producto.precio_final) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="footer">
+            Reporte generado automáticamente por el Sistema de Gestión de Tienda
+        </div>
+    </div>
+</body>
+</html>

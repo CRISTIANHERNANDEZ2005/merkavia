@@ -1,0 +1,307 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Gestión de Categorías{% endblock %}
+
+{% block content %}
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Gestión de Categorías</h5>
+        <a href="{{ url_for('agregar_categoria') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Agregar Categoría
+        </a>
+    </div>
+    
+    <!-- Formulario de búsqueda -->
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin_categorias') }}" class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Buscar por nombre</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ request.args.get('search', '') }}" placeholder="Ingrese el nombre de la categoría o subcategoría">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 me-2"><i class="fas fa-filter me-1"></i>Filtrar</button>
+                <a href="{{ url_for('admin_categorias') }}" class="btn btn-outline-secondary w-100">Limpiar</a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="accordion" id="categoriasAccordion">
+        {% if categorias_con_sub %}
+            {% for categoria in categorias_con_sub %}
+            <div class="accordion-item">
+                <div class="accordion-header d-flex align-items-center">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapse{{ categoria.categoria.id }}" aria-expanded="false" 
+                            aria-controls="collapse{{ categoria.categoria.id }}">
+                        <div class="d-flex align-items-center w-100">
+                            <div class="me-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input toggle-activo" 
+                                           type="checkbox" 
+                                           id="activo_{{ categoria.categoria.id }}" 
+                                           data-categoria-id="{{ categoria.categoria.id }}"
+                                           {% if categoria.categoria.activa %}checked{% endif %}>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ categoria.categoria.nombre }}</h6>
+                                <small class="text-muted">
+                                    {% if categoria.subcategorias %}
+                                        {{ categoria.subcategorias|length }} subcategoría(s)
+                                    {% else %}
+                                        Sin subcategorías
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="ms-auto">
+                                <span class="badge bg-primary bg-opacity-10 text-primary me-2">Principal</span>
+                                <span class="badge {% if categoria.categoria.activa %}bg-success{% else %}bg-danger{% endif %} bg-opacity-10 
+                                      text-{% if categoria.categoria.activa %}success{% else %}danger{% endif %}">
+                                    {% if categoria.categoria.activa %}Activa{% else %}Inactiva{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                
+                <div id="collapse{{ categoria.categoria.id }}" class="accordion-collapse collapse" 
+                     data-bs-parent="#categoriasAccordion">
+                    <div class="accordion-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="60%">Subcategoría</th>
+                                        <th width="20%">Estado</th>
+                                        <th width="20%">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if categoria.subcategorias %}
+                                        {% for subcat in categoria.subcategorias %}
+                                        <tr>
+                                            <td>
+                                                <h6 class="mb-0">{{ subcat.nombre }}</h6>
+                                            </td>
+                                            <td>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input toggle-activo" 
+                                                           type="checkbox" 
+                                                           id="activo_{{ subcat.id }}" 
+                                                           data-categoria-id="{{ subcat.id }}"
+                                                           {% if subcat.activa %}checked{% endif %}>
+                                                    <label class="form-check-label" for="activo_{{ subcat.id }}">
+                                                        {% if subcat.activa %}
+                                                            <span class="badge bg-success bg-opacity-10 text-success">Activa</span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger bg-opacity-10 text-danger">Inactiva</span>
+                                                        {% endif %}
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex">
+                                                    <a href="{{ url_for('editar_categoria', categoria_id=subcat.id) }}" 
+                                                       class="btn btn-sm btn-outline-primary me-2"
+                                                       data-bs-toggle="tooltip"
+                                                       title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-outline-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#deleteModal"
+                                                            data-categoria-id="{{ subcat.id }}"
+                                                            data-categoria-name="{{ subcat.nombre }}"
+                                                            title="Eliminar">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted py-4">
+                                                No hay subcategorías registradas
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-footer p-3 bg-light d-flex justify-content-end">
+                    <a href="{{ url_for('editar_categoria', categoria_id=categoria.categoria.id) }}" 
+                       class="btn btn-sm btn-outline-primary me-2">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#deleteModal"
+                            data-categoria-id="{{ categoria.categoria.id }}"
+                            data-categoria-name="{{ categoria.categoria.nombre }}">
+                        <i class="fas fa-trash me-1"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% elif request.args.get('search') %}
+            <div class="no-results text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted mb-2">No se encontraron categorías</h5>
+                <p class="text-muted">No hay categorías o subcategorías que coincidan con los criterios de búsqueda. Prueba con otro término.</p>
+            </div>
+        {% else %}
+            <div class="no-results text-center py-5">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted mb-2">No hay categorías registradas</h5>
+                <p class="text-muted">¡Comienza agregando una nueva categoría usando el botón de arriba!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p>¿Estás seguro que deseas eliminar la categoría <strong id="categoriaNameToDelete"></strong>?</p>
+                <p class="text-muted small">Esta acción no se puede deshacer y eliminará todos los datos asociados a la categoría.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a id="confirmDeleteBtn" href="#" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>Eliminar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .accordion-item {
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: transparent;
+    }
+    
+    .accordion-footer {
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .table th {
+        font-weight: 600;
+        background-color: rgba(67, 97, 238, 0.03);
+    }
+    
+    /* Estilos para los mensajes de no resultados */
+    .no-results {
+        padding: 2rem;
+        border-radius: 8px;
+        background-color: rgba(0, 0, 0, 0.03);
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .no-results i {
+        opacity: 0.3;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .no-results {
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(trigger => {
+        new bootstrap.Tooltip(trigger);
+    });
+
+    // Configurar el modal de eliminación
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const categoriaId = button.getAttribute('data-categoria-id');
+            const categoriaName = button.getAttribute('data-categoria-name');
+            
+            document.getElementById('categoriaNameToDelete').textContent = categoriaName;
+            document.getElementById('confirmDeleteBtn').href = `/admin/categorias/eliminar/${categoriaId}`;
+        });
+    }
+    
+    // Toggle para activar/desactivar categorías
+    document.querySelectorAll('.toggle-activo').forEach(toggle => {
+        toggle.addEventListener('change', function(event) {
+            event.preventDefault();
+            const categoriaId = this.getAttribute('data-categoria-id');
+            const isActive = this.checked;
+            const badge = this.closest('tr')?.querySelector('.badge') || 
+                         this.closest('.accordion-header')?.querySelector('.badge.text-success, .badge.text-danger');
+            
+            fetch(`/admin/categorias/toggle_activo/${categoriaId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ activa: isActive })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Actualizar el badge visualmente
+                    if (badge) {
+                        badge.classList.remove('bg-success', 'bg-danger', 'text-success', 'text-danger');
+                        badge.classList.add(isActive ? 'bg-success' : 'bg-danger', 'bg-opacity-10', isActive ? 'text-success' : 'text-danger');
+                        badge.textContent = isActive ? 'Activa' : 'Inactiva';
+                    }
+                } else {
+                    throw new Error(data.message || 'Error desconocido');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !isActive; // Revertir el cambio
+                alert(error.message || 'Error al conectar con el servidor');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
