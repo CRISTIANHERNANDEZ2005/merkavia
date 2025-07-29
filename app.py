@@ -4822,19 +4822,19 @@ def sugerencias_productos_admin():
             results = [{'id': p.id, 'text': p.descripcion} for p in productos if p.descripcion]
     return jsonify(results)
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        if not Categoria.query.first():
-            admin = Usuario(
-                nombre="Admin",
-                email="admin@tienda.com",
-                identificacion="1041771628",
-                password=generate_password_hash("admin123"),
-                es_admin=True,
-                fecha_registro=datetime.now(timezone.utc)
-            )
-            db.session.add(admin)
-            db.session.commit()
+# if __name__ == '__main__':
+#     with app.app_context():
+#         db.create_all()
+#         if not Categoria.query.first():
+#             admin = Usuario(
+#                 nombre="Admin",
+#                 email="admin@tienda.com",
+#                 identificacion="1041771628",
+#                 password=generate_password_hash("admin123"),
+#                 es_admin=True,
+#                 fecha_registro=datetime.now(timezone.utc)
+#             )
+#             db.session.add(admin)
+#             db.session.commit()
 
-    app.run(debug=True)
+#     app.run(debug=True)
